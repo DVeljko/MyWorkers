@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from models import db, Employee
 from datetime import date
+import requests
 
 app = Flask(__name__)
 
@@ -27,6 +28,15 @@ def single_employee(employee_id):
 @app.route("/employees", methods=['POST'])
 def add_employee():
     employee = request.get_json()
+    department_id = employee["department_id"]
+
+    response = requests.get(
+        f"http://127.0.0.1:5001/departments/{department_id}"
+    )
+
+    if response.status_code == 404:
+        return jsonify({"error": "Department does not exist"})
+    
     new_employee = Employee(
         first_name = employee['first_name'],
         last_name = employee['last_name'],
@@ -58,7 +68,7 @@ def update_employee(employee_id):
     return jsonify(employee.to_dict())
 
 
-@app.route("employee/<int:employee_id>", methods=['DELETE'])
+@app.route("/employee/<int:employee_id>", methods=['DELETE'])
 def delete_employee(employee_id):
     employee = db.get_or_404(Employee, employee_id)
     db.session.delete(employee)
