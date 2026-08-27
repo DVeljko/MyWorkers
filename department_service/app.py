@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
 from models import db, Department
 
@@ -23,7 +23,23 @@ def get_single_department(department_id):
     department = db.get_or_404(Department, department_id)
     return jsonify(department.to_dict())
 
+@app.route("/new-department", methods=['POST'])
+def add_new_department():
+    data = request.get_json()
+    name = data['name']
 
+    existing_department = db.session.scalar(
+        db.select(Department).where(Department.name == name)
+    )
+
+    if existing_department:
+        return jsonify({"error": "A department with this name already exists."}), 409
+
+    new_department = Department(name=name)
+    db.session.add(new_department)
+    db.session.commit()
+
+    return jsonify(new_department.to_dict()), 201
 
 
 if __name__ == "__main__":
