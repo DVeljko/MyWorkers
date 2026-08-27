@@ -43,11 +43,27 @@ def add_employee():
     db.session.commit()
     return jsonify(new_employee.to_dict()), 201
 
-@app.route("/employees/<int:emloyee_id>", methods=['PATCH'])
+@app.route("/employees/<int:employee_id>", methods=['PATCH'])
 def update_employee(employee_id):
+    employee = db.get_or_404(Employee, employee_id)
+    data = request.get_json()
 
-# NAPRAVITI RUTU ZA UPDATE RADNIKA ()
+    allowed_fields = ['phone', "position", "salary", "status", "department_id"]
+    for field in allowed_fields:
+        if field in data:
+            setattr(employee, field, data[field])
 
+    db.session.commit()
+
+    return jsonify(employee.to_dict())
+
+
+@app.route("employee/<int:employee_id>", methods=['DELETE'])
+def delete_employee(employee_id):
+    employee = db.get_or_404(Employee, employee_id)
+    db.session.delete(employee)
+    db.session.commit()
+    return jsonify({"message": "Employee deleted successfully"}), 200
 
 if __name__ == "__main__":
     app.run(debug=True)
