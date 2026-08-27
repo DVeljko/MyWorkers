@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 from models import db, Employee
 
 app = Flask(__name__)
@@ -12,7 +12,11 @@ with app.app_context():
     db.create_all()
 
 
-
+@app.route('/employees', methods=['GET'])
+def get_all_employees():
+    employees = db.session.scalars(db.select(Employee)).all()
+    employees_list = [employee.to_dict() for employee in employees]
+    return jsonify(employees_list)
 
 
 
