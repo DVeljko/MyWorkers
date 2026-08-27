@@ -66,4 +66,4 @@ def delete_employee(employee_id):
     return jsonify({"message": "Employee deleted successfully"}), 200
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=5002)
