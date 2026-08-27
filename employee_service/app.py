@@ -43,6 +43,10 @@ def add_employee():
     db.session.commit()
     return jsonify(new_employee.to_dict()), 201
 
+@app.route("/employees/<int:emloyee_id>", methods=['PATCH'])
+def update_employee(employee_id):
+
+# NAPRAVITI RUTU ZA UPDATE RADNIKA ()
 
 
 if __name__ == "__main__":
