@@ -56,7 +56,7 @@ def update_department(department_id):
 
     return jsonify(department.to_dict())
 
-@app.route("/departments/<int:department_id>")
+@app.route("/departments/<int:department_id>", methods=['DELETE'])
 def delete_department(department_id):
     department = db.get_or_404(Department, department_id)
     db.session.delete(department)
