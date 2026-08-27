@@ -58,6 +58,16 @@ def update_employee(employee_id):
     employee = db.get_or_404(Employee, employee_id)
     data = request.get_json()
 
+    if "department_id" in data:
+        department_id = data['department_id']
+
+        response = requests.get(
+            f"http://127.0.0.1:5001/departments/{department_id}"
+        )
+
+        if response.status_code == 404:
+            return jsonify({"error": "Department does not exist"}), 400
+
     allowed_fields = ['phone', "position", "salary", "status", "department_id"]
     for field in allowed_fields:
         if field in data:
