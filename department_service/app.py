@@ -41,6 +41,22 @@ def add_new_department():
 
     return jsonify(new_department.to_dict()), 201
 
+@app.route("/departments/<int:department_id>", methods=['PATCH'])
+def update_department(department_id):
+    department = db.get_or_404(Department, department_id)
+    data = request.get_json()
+    new_name = data['name']
+
+    existing_department = db.session.scalar(db.select(Department).where(Department.name == new_name))
+    if existing_department and existing_department != department.id:
+        return jsonify({"error": "A department with this name already exists."}) , 409
+
+    department.name = new_name
+    db.session.commit()
+
+    return jsonify(department.to_dict())
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
