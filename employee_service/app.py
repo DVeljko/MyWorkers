@@ -18,6 +18,11 @@ def get_all_employees():
     employees_list = [employee.to_dict() for employee in employees]
     return jsonify(employees_list)
 
+@app.route("/employees/<int:employee_id>", methods=['GET'])
+def single_employee(employee_id):
+    employee = db.get_or_404(Employee, employee_id)
+    return jsonify(employee.to_dict())
+
 
 
 
