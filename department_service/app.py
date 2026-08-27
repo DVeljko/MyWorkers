@@ -18,12 +18,12 @@ def get_departments():
     departments_list = [department.to_dict() for department in departments]
     return jsonify(departments_list)
 
-@app.route("/departments/<int:department_id>", methohds=['GET'])
+@app.route("/departments/<int:department_id>", methods=['GET'])
 def get_single_department(department_id):
     department = db.get_or_404(Department, department_id)
     return jsonify(department.to_dict())
 
-@app.route("/new-department", methods=['POST'])
+@app.route("/departments", methods=['POST'])
 def add_new_department():
     data = request.get_json()
     name = data['name']
@@ -48,13 +48,20 @@ def update_department(department_id):
     new_name = data['name']
 
     existing_department = db.session.scalar(db.select(Department).where(Department.name == new_name))
-    if existing_department and existing_department != department.id:
+    if existing_department and existing_department.id != department.id:
         return jsonify({"error": "A department with this name already exists."}) , 409
 
     department.name = new_name
     db.session.commit()
 
     return jsonify(department.to_dict())
+
+@app.route("/departments/<int:department_id>")
+def delete_department(department_id):
+    department = db.get_or_404(Department, department_id)
+    db.session.delete(department)
+    db.session.commit()
+    return jsonify({"message": "Department deleted successfully"}), 200
 
 
 
