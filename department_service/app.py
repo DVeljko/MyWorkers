@@ -18,6 +18,12 @@ def get_departments():
     departments_list = [department.to_dict() for department in departments]
     return jsonify(departments_list)
 
+@app.route("/departments/<int:department_id>", methohds=['GET'])
+def get_single_department(department_id):
+    department = db.get_or_404(Department, department_id)
+    return jsonify(department.to_dict())
+
+
 
 
 if __name__ == "__main__":
