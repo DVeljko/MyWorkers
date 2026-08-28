@@ -2,6 +2,11 @@ from flask import Flask, jsonify, request
 from models import db, Employee
 from datetime import date
 import requests
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+DEPARTMENT_SERVICE_URL = os.getenv("DEPARTMENT_SERVICE_URL")
 
 app = Flask(__name__)
 
@@ -16,7 +21,7 @@ with app.app_context():
 def validate_department(department_id):
     try:
         response = requests.get(
-            f"http://127.0.0.1:5001/departments/{department_id}",
+            f"{DEPARTMENT_SERVICE_URL}/departments/{department_id}",
             timeout=3
         )
 
