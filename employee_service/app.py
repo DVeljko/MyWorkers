@@ -40,6 +40,17 @@ def get_all_employees():
     employees_list = [employee.to_dict() for employee in employees]
     return jsonify(employees_list)
 
+@app.route("/employees/<int:department_id>", methods=['GET'])
+def show_employees_by_department(department_id):
+    error = validate_department(department_id)
+    if error:
+        return error
+
+    employees_by_department = db.session.scalars(db.select(Employee).where(Employee.department_id == department_id))
+    employees = [employee.to_dict() for employee in employees_by_department]
+    return jsonify(employees)
+    
+
 @app.route("/employees/<int:employee_id>", methods=['GET'])
 def single_employee(employee_id):
     employee = db.get_or_404(Employee, employee_id)
