@@ -13,6 +13,21 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
+def validate_department(department_id):
+    try:
+        response = requests.get(
+            f"http://127.0.0.1:5001/departments/{department_id}",
+            timeout=3
+        )
+
+    except requests.exceptions.RequestException:
+        return jsonify({"error": "Department service is unavailable"}), 503
+
+    if response.status_code == 404:
+        return jsonify({"error": "Department does not exist"}), 400
+
+    return None
+
 
 @app.route('/employees', methods=['GET'])
 def get_all_employees():
@@ -30,17 +45,9 @@ def add_employee():
     employee = request.get_json()
     department_id = employee["department_id"]
 
-    try:
-        response = requests.get(
-            f"http://127.0.0.1:5001/departments/{department_id}",
-            timeout=3
-        )
-
-    except requests.exceptions.RequestException:
-        return jsonify({"error": "Department service is unavailable"}), 503
-
-    if response.status_code == 404:
-        return jsonify({"error": "Department does not exist"}), 400
+    error = validate_department(department_id=department_id)
+    if error:
+        return error
     
     new_employee = Employee(
         first_name = employee['first_name'],
@@ -65,18 +72,10 @@ def update_employee(employee_id):
 
     if "department_id" in data:
         department_id = data['department_id']
-        try:
-            response = requests.get(
-                f"http://127.0.0.1:5001/departments/{department_id}",
-                timeout=3
-            )
+        error = validate_department(department_id=department_id)
 
-        except requests.exceptions.RequestException:
-            return jsonify({"error": "Department service is unavailable"}), 503
-
-        if response.status_code == 404:
-            return jsonify({"error": "Department does not exist"}), 400
-
+        if error:
+            return error
         
     allowed_fields = ['phone', "position", "salary", "status", "department_id"]
     for field in allowed_fields:
