@@ -40,7 +40,7 @@ def get_all_employees():
     employees_list = [employee.to_dict() for employee in employees]
     return jsonify(employees_list)
 
-@app.route("/employees/<int:department_id>", methods=['GET'])
+@app.route("/employees/<int:department_id>/employees", methods=['GET'])
 def show_employees_by_department(department_id):
     error = validate_department(department_id)
     if error:
