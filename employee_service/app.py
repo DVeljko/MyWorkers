@@ -36,6 +36,13 @@ def validate_department(department_id):
 
 @app.route('/employees', methods=['GET'])
 def get_all_employees():
+
+    name = request.args.get('name')
+    if name:
+        employee = db.session.scalars(db.select(Employee).where(Employee.first_name == name)).all()
+        employee_list = [emp.to_dict() for emp in employee]
+        return jsonify(employee_list)
+
     employees = db.session.scalars(db.select(Employee)).all()
     employees_list = [employee.to_dict() for employee in employees]
     return jsonify(employees_list)
