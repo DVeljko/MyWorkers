@@ -64,6 +64,30 @@ def single_employee(employee_id):
     employee = db.get_or_404(Employee, employee_id)
     return jsonify(employee.to_dict())
 
+
+@app.route("/dashboard")
+def dashboard():
+    total_employees = len(db.session.scalars(db.select(Employee)).all())
+    active_employees = len(db.session.scalars(db.select(Employee).where(Employee.status == "active")).all())
+    inactive_employees = len(db.session.scalars(db.select(Employee).where(Employee.status == "inactive")).all())
+
+    try:
+        response = requests.get(f"{DEPARTMENT_SERVICE_URL}/departments", timeout=3)
+
+    except requests.exceptions.RequestException:
+        return jsonify({"error": "Department service is unavailable"})
+
+    if response.status_code == 404:
+        return jsonify({"error": "Department does not exist"}), 400
+
+    department_list = response.json()
+    return jsonify({
+        "total_employees": total_employees,
+        "active_employees": active_employees,
+        "inactive_employees": inactive_employees,
+        "total_departments": len(department_list),
+    })
+
 @app.route("/employees", methods=['POST'])
 def add_employee():
     employee = request.get_json()
