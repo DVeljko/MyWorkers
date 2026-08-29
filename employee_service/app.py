@@ -3,6 +3,7 @@ from models import db, Employee
 from datetime import date
 import requests
 import os
+from sqlalchemy import or_
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -39,7 +40,7 @@ def get_all_employees():
 
     name = request.args.get('name')
     if name:
-        employee = db.session.scalars(db.select(Employee).where(Employee.first_name == name)).all()
+        employee = db.session.scalars(db.select(Employee).where(or_(Employee.first_name.ilike(f"%{name}%"), Employee.last_name.ilike(f"%{name}%")))).all()
         employee_list = [emp.to_dict() for emp in employee]
         return jsonify(employee_list)
 
