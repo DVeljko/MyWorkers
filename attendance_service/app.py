@@ -50,7 +50,7 @@ def check_in(employee_id):
     db.session.commit()
     return jsonify(attendance.to_dict())
 
-@app.route("attendance/<int:employee_id>", methods=['PATCH'])
+@app.route("/attendance/<int:employee_id>", methods=['PATCH'])
 def check_out(employee_id):
 
     error = validate_employee(employee_id)
@@ -65,6 +65,13 @@ def check_out(employee_id):
     db.session.commit()
 
     return jsonify(employee.to_dict())
+
+@app.route("/attendance", methods=['GET'])
+def all_attendance():
+    attendances = db.session.scalars(db.select(Attendance)).all()
+    list_of_attendances = [attendance.to_dict() for attendance in attendances]
+
+    return jsonify(list_of_attendances)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5003)
