@@ -97,7 +97,13 @@ def get_attendance_by_employee_id(employee_id):
     employee_attendance = [attendance.to_dict() for attendance in attendances_of_employee]
     return jsonify(employee_attendance)
 
+@app.route("/attendance/<int:attendance_id>", methods=['DELETE'])
+def delete_attendance(attendance_id):
+    attendance = db.get_or_404(Attendance, attendance_id)
+    db.session.delete(attendance)
+    db.session.commit()
 
+    return jsonify({"message": "Attendance deleted successfully"})
 
 if __name__ == "__main__":
     app.run(debug=True, port=5003)
