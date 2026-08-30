@@ -34,12 +34,22 @@ def validate_employee(employee_id):
     return None
 
 
-@app.route("/attendance/<int:employee_id>", methods=['POST'])
+@app.route("/attendance/<int:employee_id>", methods=["POST"])
 def check_in(employee_id):
 
     error = validate_employee(employee_id)
     if error:
         return error
+
+    active_attendance = db.session.scalar(
+        db.select(Attendance).where(
+            Attendance.employee_id == employee_id,
+            Attendance.departure_time == None
+        )
+    )
+
+    if active_attendance:
+        return jsonify({"error": "Employee is already checked in"}), 409
 
     attendance = Attendance(
         employee_id=employee_id,
@@ -48,7 +58,8 @@ def check_in(employee_id):
 
     db.session.add(attendance)
     db.session.commit()
-    return jsonify(attendance.to_dict())
+
+    return jsonify(attendance.to_dict()), 201
 
 
 @app.route("/attendance/<int:employee_id>", methods=['PATCH'])
