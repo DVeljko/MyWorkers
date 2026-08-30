@@ -50,6 +50,7 @@ def check_in(employee_id):
     db.session.commit()
     return jsonify(attendance.to_dict())
 
+
 @app.route("/attendance/<int:employee_id>", methods=['PATCH'])
 def check_out(employee_id):
 
@@ -66,6 +67,7 @@ def check_out(employee_id):
 
     return jsonify(employee.to_dict())
 
+
 @app.route("/attendance", methods=['GET'])
 def all_attendance():
     attendances = db.session.scalars(db.select(Attendance)).all()
@@ -73,10 +75,29 @@ def all_attendance():
 
     return jsonify(list_of_attendances)
 
+
 @app.route("/attendance/<int:attendance_id>", methods=['GET'])
 def get_attendance(attendance_id):
     attendance = db.get_or_404(Attendance, attendance_id)
     return jsonify(attendance.to_dict())
+
+
+@app.route("/employee/<int:employee_id>/attendance", methods=['GET'])
+def get_attendance_by_employee_id(employee_id):
+
+    error = validate_employee(employee_id)
+    if error:
+        return error
+
+    attendances_of_employee = db.session.scalars(db.select(Attendance).where(Attendance.employee_id == employee_id)).all()
+
+    if not attendances_of_employee:
+        return jsonify({"error": "There is no data for this employee"})
+    
+    employee_attendance = [attendance.to_dict() for attendance in attendances_of_employee]
+    return jsonify(employee_attendance)
+
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5003)
