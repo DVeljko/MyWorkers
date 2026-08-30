@@ -26,10 +26,10 @@ def validate_employee(employee_id):
         )
 
     except requests.exceptions.RequestException:
-        return jsonify({"error": "Employee service is unavailable"})
+        return jsonify({"error": "Employee service is unavailable"}), 503
 
     if response.status_code == 404:
-        return jsonify({"error": "Employee does not exist"})
+        return jsonify({"error": "Employee does not exist"}), 400
 
     return None
 
