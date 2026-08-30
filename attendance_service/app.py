@@ -73,5 +73,10 @@ def all_attendance():
 
     return jsonify(list_of_attendances)
 
+@app.route("/attendance/<int:attendance_id>", methods=['GET'])
+def get_attendance(attendance_id):
+    attendance = db.get_or_404(Attendance, attendance_id)
+    return jsonify(attendance.to_dict())
+
 if __name__ == "__main__":
     app.run(debug=True, port=5003)
