@@ -69,9 +69,9 @@ def check_out(employee_id):
     if error:
         return error
 
-    employee = db.session.scalar(db.select(Attendance).where(Attendance.employee_id == employee_id))
+    employee = db.session.scalar(db.select(Attendance).where(Attendance.employee_id == employee_id, Attendance.departure_time == None))
     if employee is None:
-        return jsonify({"error": "There is no employee with that ID"})
+        return jsonify({"error": "Employee is not checked in"}) , 409
 
     employee.departure_time = datetime.now()
     db.session.commit()
