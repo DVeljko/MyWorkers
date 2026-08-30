@@ -3,6 +3,7 @@ from models import Attendance, db
 from dotenv import load_dotenv
 import os
 import requests
+from datetime import datetime
 
 load_dotenv()
 
@@ -31,6 +32,26 @@ def validate_employee(employee_id):
         return jsonify({"error": "Employee does not exist"})
 
     return None
+
+
+@app.route("/attendance/<int:employee_id>", methods=['POST'])
+def check_in(employee_id):
+
+    error = validate_employee(employee_id)
+    if error:
+        return error
+
+    attendance = Attendance(
+        employee_id=employee_id,
+        arrival_time=datetime.now()
+    )
+
+    db.session.add(attendance)
+    db.session.commit()
+    return jsonify(attendance.to_dict())
+
+
+    
 
 if __name__ == "__main__":
     app.run(debug=True, port=5003)
