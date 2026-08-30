@@ -50,8 +50,21 @@ def check_in(employee_id):
     db.session.commit()
     return jsonify(attendance.to_dict())
 
+@app.route("attendance/<int:employee_id>", methods=['PATCH'])
+def check_out(employee_id):
 
-    
+    error = validate_employee(employee_id)
+    if error:
+        return error
+
+    employee = db.session.scalar(db.select(Attendance).where(Attendance.employee_id == employee_id))
+    if employee is None:
+        return jsonify({"error": "There is no employee with that ID"})
+
+    employee.departure_time = datetime.now()
+    db.session.commit()
+
+    return jsonify(employee.to_dict())
 
 if __name__ == "__main__":
     app.run(debug=True, port=5003)
