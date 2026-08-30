@@ -103,7 +103,7 @@ def get_attendance_by_employee_id(employee_id):
     attendances_of_employee = db.session.scalars(db.select(Attendance).where(Attendance.employee_id == employee_id)).all()
 
     if not attendances_of_employee:
-        return jsonify({"error": "There is no data for this employee"})
+        return jsonify({"error": "There is no data for this employee"}) , 404
     
     employee_attendance = [attendance.to_dict() for attendance in attendances_of_employee]
     return jsonify(employee_attendance)
