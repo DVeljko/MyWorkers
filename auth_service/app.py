@@ -64,6 +64,25 @@ def register():
     db.session.commit()
     return jsonify({"success": "Employee profile was created successfully"}) , 201
 
+@app.route("/login", methods=['POST'])
+def login():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+
+    user_exists = db.session.scalar(db.select(User).where(User.email == email))
+    if not user_exists:
+        return jsonify({"error": "There is no employee with this email"}), 401
+
+    if not check_password_hash(user_exists.password, password):
+        return jsonify({"error": "Wrong password"}), 401
+
+    login_user(user_exists)
+    return jsonify({"success": "Login successful"}), 200
+
+    
+
+
 
 
 
