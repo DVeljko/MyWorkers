@@ -1,4 +1,4 @@
-from flask import Flask, abort
+from flask import Flask, abort, request, jsonify
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import User, db
@@ -37,7 +37,32 @@ def admin_required(f):
 
     return check_admin
 
+@app.route("/register", methods=['POST'])
+def register():
+    role = "employee"
+    data = request.get_json()
 
+    email = data.get('email')
+    email_exists = db.session.scalar(db.select(User).where(User.email == email))
+
+    if email_exists:
+        return jsonify({"error": "Employee with this email already exists"}), 409
+
+    password = data.get('password')
+    confirm_password = data.get('confirm_password')
+
+    if not password == confirm_password:
+        return jsonify({'error': "Password do not match"}), 400
+
+    new_user = User(
+        email=email,
+        password=generate_password_hash(password),
+        role=role,
+    )
+
+    db.session.add(new_user)
+    db.session.commit()
+    return jsonify({"success": "Employee profile was created successfully"}) , 201
 
 
 
