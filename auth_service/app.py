@@ -23,7 +23,7 @@ login_manager = LoginManager(app)
 
 @login_manager.user_loader
 def load_user(user_id):
-    return db.session.get(User, user_id)
+    return db.session.get(User, int(user_id))
 
 def admin_required(f):
     @wraps(f)
