@@ -5,16 +5,19 @@ import requests
 import os
 from sqlalchemy import or_
 from dotenv import load_dotenv
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt, get_jwt_identity
 
 load_dotenv()
 DEPARTMENT_SERVICE_URL = os.getenv("DEPARTMENT_SERVICE_URL")
 
 app = Flask(__name__)
 
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///employees.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
+jwt = JWTManager(app)
 
 with app.app_context():
     db.create_all()
@@ -136,11 +139,17 @@ def update_employee(employee_id):
 
 
 @app.route("/employee/<int:employee_id>", methods=['DELETE'])
+@jwt_required()
 def delete_employee(employee_id):
-    employee = db.get_or_404(Employee, employee_id)
-    db.session.delete(employee)
-    db.session.commit()
-    return jsonify({"message": "Employee deleted successfully"}), 200
+    claims = get_jwt()
+
+    if claims['role'] == "admin":
+        employee = db.get_or_404(Employee, employee_id)
+        db.session.delete(employee)
+        db.session.commit()
+        return jsonify({"message": "Employee deleted successfully"}), 200
+
+    return jsonify({"error": "Admin access required"}), 403
 
 if __name__ == "__main__":
     app.run(debug=True, port=5002)

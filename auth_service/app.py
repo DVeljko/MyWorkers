@@ -5,6 +5,7 @@ from models import User, db
 from dotenv import load_dotenv
 import os
 from functools import wraps
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
 
 load_dotenv()
@@ -13,6 +14,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 
 db.init_app(app)
 
@@ -20,6 +22,7 @@ with app.app_context():
     db.create_all()
 
 login_manager = LoginManager(app)
+jwt = JWTManager(app)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -78,12 +81,13 @@ def login():
         return jsonify({"error": "Wrong password"}), 401
 
     login_user(user_exists)
-    return jsonify({"success": "Login successful"}), 200
-
+    access_token = create_access_token(identity=str(user_exists.id), 
+                                       additional_claims={
+                                           "role": user_exists.role
+                                       }
+                                    )
     
-
-
-
+    return jsonify({"access_token": access_token}), 200
 
 
 
