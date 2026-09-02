@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import os
 from functools import wraps
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
+from flask_migrate import Migrate
 
 
 load_dotenv()
@@ -18,8 +19,8 @@ app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 
 db.init_app(app)
 
-with app.app_context():
-    db.create_all()
+migrate = Migrate(app, db)
+
 
 login_manager = LoginManager(app)
 jwt = JWTManager(app)
@@ -83,7 +84,8 @@ def login():
     login_user(user_exists)
     access_token = create_access_token(identity=str(user_exists.id), 
                                        additional_claims={
-                                           "role": user_exists.role
+                                           "role": user_exists.role,
+                                           "employee_id": user_exists.employee_id
                                        }
                                     )
     

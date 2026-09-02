@@ -10,3 +10,4 @@ class User(db.Model, UserMixin):
     email: Mapped[str] = mapped_column(unique=True, nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
     role: Mapped[str] = mapped_column(nullable=False)
+    employee_id: Mapped[int | None] = mapped_column(nullable=True)
