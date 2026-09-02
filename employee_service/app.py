@@ -39,8 +39,13 @@ def validate_department(department_id):
 
 
 @app.route('/employees', methods=['GET'])
+@jwt_required()
 def get_all_employees():
 
+    claims = get_jwt()
+    if claims['role'] not in ['admin','manager']:
+        return jsonify({"error":"Only admin or manager can see all employees"}), 403
+    
     name = request.args.get('name')
     if name:
         employee = db.session.scalars(db.select(Employee).where(or_(Employee.first_name.ilike(f"%{name}%"), Employee.last_name.ilike(f"%{name}%")))).all()
@@ -52,7 +57,13 @@ def get_all_employees():
     return jsonify(employees_list)
 
 @app.route("/employees/<int:department_id>/employees", methods=['GET'])
+@jwt_required()
 def show_employees_by_department(department_id):
+
+    claims = get_jwt()
+    if claims['role'] not in ['admin','manager']:
+        return jsonify({"error":"Only admin or manager can see all employee by department"}), 403
+
     error = validate_department(department_id)
     if error:
         return error
@@ -63,13 +74,25 @@ def show_employees_by_department(department_id):
     
 
 @app.route("/employees/<int:employee_id>", methods=['GET'])
+@jwt_required()
 def single_employee(employee_id):
+
+    claim = get_jwt()
+    if claim['role'] not in ['admin','manager']:
+        return jsonify({"error":"Only admin or manager can see employee"}), 403
+    
     employee = db.get_or_404(Employee, employee_id)
     return jsonify(employee.to_dict())
 
 
 @app.route("/dashboard")
+@jwt_required()
 def dashboard():
+
+    claims = get_jwt()
+    if claims['role'] not in ['manager','admin']:
+        return jsonify({"error":"Only admin or manager can see dashborad"}), 403
+
     total_employees = len(db.session.scalars(db.select(Employee)).all())
     active_employees = len(db.session.scalars(db.select(Employee).where(Employee.status == "active")).all())
     inactive_employees = len(db.session.scalars(db.select(Employee).where(Employee.status == "inactive")).all())
@@ -92,7 +115,12 @@ def dashboard():
     })
 
 @app.route("/employees", methods=['POST'])
+@jwt_required()
 def add_employee():
+    claim = get_jwt()
+    if not claim['role'] == "admin":
+        return jsonify({"error":"Only admin can add an employee"}), 403
+    
     employee = request.get_json()
     department_id = employee["department_id"]
 
@@ -117,7 +145,12 @@ def add_employee():
     return jsonify(new_employee.to_dict()), 201
 
 @app.route("/employees/<int:employee_id>", methods=['PATCH'])
+@jwt_required()
 def update_employee(employee_id):
+    claim = get_jwt()
+    if not claim['role'] == "admin":
+        return jsonify({"error":"Only admin can update employee status"}), 403
+    
     employee = db.get_or_404(Employee, employee_id)
     data = request.get_json()
 
