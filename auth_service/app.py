@@ -5,7 +5,7 @@ from models import User, db
 from dotenv import load_dotenv
 import os
 from functools import wraps
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
 
 
 load_dotenv()
@@ -88,6 +88,33 @@ def login():
                                     )
     
     return jsonify({"access_token": access_token}), 200
+
+
+@app.route("/users/<int:user_id>/role", methods=['PATCH'])
+@jwt_required()
+def edit_user_role(user_id):
+
+    claims = get_jwt()
+
+    if claims["role"] != "admin":
+        return jsonify({"error": "Admin access required"}), 403
+
+    user = db.get_or_404(User, user_id)
+    data = request.get_json()
+
+    role = data.get('role')
+
+    if role not in ['manager','employee','admin']:
+        return jsonify({"error":"Role is not valid"}) , 400
+
+    user.role = role
+    db.session.commit()
+    return jsonify({
+        "success": "User role updated successfully",
+        "user_id": user.id,
+        "role": user.role
+    }), 200
+    
 
 
 
