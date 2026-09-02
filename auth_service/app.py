@@ -7,6 +7,7 @@ import os
 from functools import wraps
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
 from flask_migrate import Migrate
+import requests
 
 
 load_dotenv()
@@ -16,6 +17,7 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
+EMPLOYEE_SERVICE_URL = os.getenv("EMPLOYEE_SERVICE_URL")
 
 db.init_app(app)
 
@@ -115,6 +117,54 @@ def edit_user_role(user_id):
         "success": "User role updated successfully",
         "user_id": user.id,
         "role": user.role
+    }), 200
+
+@app.route("/users/<int:user_id>/employee", methods=["PATCH"])
+@jwt_required()
+def link_user_employee(user_id):
+    claims = get_jwt()
+
+    if claims["role"] != "admin":
+        return jsonify({"error": "Admin access required"}), 403
+
+    user = db.get_or_404(User, user_id)
+
+    data = request.get_json()
+    employee_id = data.get("employee_id")
+
+    token = request.headers.get("Authorization")
+
+    try:
+        response = requests.get(
+            f"{EMPLOYEE_SERVICE_URL}/employees/{employee_id}",
+            headers={
+                "Authorization": token
+            },
+            timeout=3
+        )
+    except requests.exceptions.RequestException:
+        return jsonify({"error": "Employee service is unavailable"}), 503
+
+    if response.status_code == 404:
+        return jsonify({"error": "Employee does not exist"}), 400
+
+    if response.status_code != 200:
+        return jsonify({"error": "Could not validate employee"}), response.status_code
+
+    employee = response.json()
+
+    if user.email != employee["email"]:
+        return jsonify({
+            "error": "User email and employee email do not match"
+        }), 400
+
+    user.employee_id = employee_id
+    db.session.commit()
+
+    return jsonify({
+        "success": "User linked to employee successfully",
+        "user_id": user.id,
+        "employee_id": user.employee_id
     }), 200
     
 
