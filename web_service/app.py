@@ -10,6 +10,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 
 AUTH_SERVICE = os.getenv("AUTH_SERVICE")
+EMPLOYEE_SERVICE_URL = os.getenv("EMPLOYEE_SERVICE_URL")
 
 
 @app.route("/login", methods=['GET','POST'])
@@ -42,8 +43,31 @@ def login():
 
 @app.route("/dashboard")
 def dashboard():
-    return "Dashboard"
+    token = session.get('access_token')
 
+    if not token:
+        return redirect(url_for('login'))
+
+    response = requests.get(
+        f"{EMPLOYEE_SERVICE_URL}/dashboard",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
+        timeout=3
+    )
+
+    if response.status_code != 200:
+        return redirect(url_for('login'))
+
+    data = response.json()
+
+    return render_template(
+        "dashboard.html",
+        total_employees=data["total_employees"],
+        active_employees=data["active_employees"],
+        inactive_employees=data["inactive_employees"],
+        total_departments=data["total_departments"]
+    )
 
 
 
