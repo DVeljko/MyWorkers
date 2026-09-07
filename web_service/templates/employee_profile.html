@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Employee Profile{% endblock %}
+
+{% block content %}
+
+<div class="profile-page">
+
+    {% if error %}
+        <p class="error">{{ error }}</p>
+
+    {% elif employee %}
+
+        <div class="profile-card">
+
+            <div class="profile-header">
+                <div>
+                    <h1>{{ employee.first_name }} {{ employee.last_name }}</h1>
+                    <p>{{ employee.position }}</p>
+                </div>
+
+                <span class="status-badge">
+                    {{ employee.status }}
+                </span>
+            </div>
+
+            <div class="profile-grid">
+
+                <div class="profile-item">
+                    <span class="profile-label">Employee ID</span>
+                    <span>{{ employee.id }}</span>
+                </div>
+
+                <div class="profile-item">
+                    <span class="profile-label">Email</span>
+                    <span>{{ employee.email }}</span>
+                </div>
+
+                <div class="profile-item">
+                    <span class="profile-label">Phone</span>
+                    <span>{{ employee.phone }}</span>
+                </div>
+
+                <div class="profile-item">
+                    <span class="profile-label">Position</span>
+                    <span>{{ employee.position }}</span>
+                </div>
+
+                <div class="profile-item">
+                    <span class="profile-label">Hire date</span>
+                    <span>{{ employee.hire_date }}</span>
+                </div>
+
+                <div class="profile-item">
+                    <span class="profile-label">Salary</span>
+                    <span>{{ employee.salary }}</span>
+                </div>
+
+                <div class="profile-item">
+                    <span class="profile-label">Status</span>
+                    <span>{{ employee.status }}</span>
+                </div>
+
+                <div class="profile-item">
+                    <span class="profile-label">Department ID</span>
+                    <span>{{ employee.department_id }}</span>
+                </div>
+
+            </div>
+
+            <div class="profile-actions">
+                <a href="{{ url_for('all_employees') }}" class="btn-secondary">
+                    Back
+                </a>
+            </div>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

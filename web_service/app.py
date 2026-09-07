@@ -111,6 +111,39 @@ def add_employee():
 
     return render_template("add_employee.html", form=form)
 
+
+@app.route("/employees/<int:employee_id>")
+def employee_profile(employee_id):
+
+    token = session.get("access_token")
+
+    if not token:
+        return redirect(url_for("login"))
+
+    response = requests.get(
+        f"{EMPLOYEE_SERVICE_URL}/employees/{employee_id}",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
+        timeout=3
+    )
+
+    if response.status_code == 200:
+        employee = response.json()
+
+        return render_template(
+            "employee_profile.html",
+            employee=employee
+        )
+
+    error = response.json().get("error", "Something went wrong.")
+
+    return render_template(
+        "employee_profile.html",
+        employee=None,
+        error=error
+    )
+
 @app.route("/dashboard")
 def dashboard():
     token = session.get('access_token')

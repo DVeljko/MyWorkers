@@ -19,8 +19,11 @@
     {% endif %}
 
     {% if employees %}
+
         <div class="table-wrapper">
+
             <table>
+
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -29,16 +32,24 @@
                         <th>Email</th>
                         <th>Position</th>
                         <th>Status</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
 
                 <tbody>
+
                     {% for employee in employees %}
+
                         <tr>
+
                             <td>{{ employee.id }}</td>
+
                             <td>{{ employee.first_name }}</td>
+
                             <td>{{ employee.last_name }}</td>
+
                             <td>{{ employee.email }}</td>
+
                             <td>{{ employee.position }}</td>
 
                             <td>
@@ -46,16 +57,34 @@
                                     {{ employee.status }}
                                 </span>
                             </td>
+
+                            <td>
+                                <a
+                                    href="{{ url_for('employee_profile', employee_id=employee.id) }}"
+                                    class="btn-view"
+                                >
+                                    View
+                                </a>
+                            </td>
+
                         </tr>
+
                     {% endfor %}
+
                 </tbody>
+
             </table>
+
         </div>
 
     {% else %}
+
         {% if not error %}
-            <p class="empty-message">No employees found.</p>
+            <p class="empty-message">
+                No employees found.
+            </p>
         {% endif %}
+
     {% endif %}
 
 </div>
