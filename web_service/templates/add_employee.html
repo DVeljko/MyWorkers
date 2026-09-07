@@ -4,65 +4,84 @@
 
 {% block content %}
 
-<h1>Add Employee</h1>
+<div class="form-page">
 
-{% if error %}
-    <p>{{ error }}</p>
-{% endif %}
+    <div class="form-card">
 
-<form method="POST">
+        <div class="form-header">
+            <h1>Add Employee</h1>
+            <p>Create a new employee record.</p>
+        </div>
 
-    {{ form.hidden_tag() }}
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
 
-    <p>
-        {{ form.first_name.label }}<br>
-        {{ form.first_name() }}
-    </p>
+        <form method="POST" class="employee-form">
 
-    <p>
-        {{ form.last_name.label }}<br>
-        {{ form.last_name() }}
-    </p>
+            {{ form.hidden_tag() }}
 
-    <p>
-        {{ form.email.label }}<br>
-        {{ form.email() }}
-    </p>
+            <div class="form-grid">
 
-    <p>
-        {{ form.phone.label }}<br>
-        {{ form.phone() }}
-    </p>
+                <div class="form-group">
+                    {{ form.first_name.label }}
+                    {{ form.first_name() }}
+                </div>
 
-    <p>
-        {{ form.position.label }}<br>
-        {{ form.position() }}
-    </p>
+                <div class="form-group">
+                    {{ form.last_name.label }}
+                    {{ form.last_name() }}
+                </div>
 
-    <p>
-        {{ form.hire_date.label }}<br>
-        {{ form.hire_date() }}
-    </p>
+                <div class="form-group">
+                    {{ form.email.label }}
+                    {{ form.email() }}
+                </div>
 
-    <p>
-        {{ form.salary.label }}<br>
-        {{ form.salary() }}
-    </p>
+                <div class="form-group">
+                    {{ form.phone.label }}
+                    {{ form.phone() }}
+                </div>
 
-    <p>
-        {{ form.status.label }}<br>
-        {{ form.status() }}
-    </p>
+                <div class="form-group">
+                    {{ form.position.label }}
+                    {{ form.position() }}
+                </div>
 
-    <p>
-        {{ form.department_id.label }}<br>
-        {{ form.department_id() }}
-    </p>
+                <div class="form-group">
+                    {{ form.hire_date.label }}
+                    {{ form.hire_date() }}
+                </div>
 
-    <p>
-        {{ form.submit() }}
-    </p>
+                <div class="form-group">
+                    {{ form.salary.label }}
+                    {{ form.salary() }}
+                </div>
 
-</form>
+                <div class="form-group">
+                    {{ form.status.label }}
+                    {{ form.status() }}
+                </div>
+
+                <div class="form-group">
+                    {{ form.department_id.label }}
+                    {{ form.department_id() }}
+                </div>
+
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ url_for('all_employees') }}" class="btn-secondary">
+                    Cancel
+                </a>
+
+                {{ form.submit(class="btn-primary") }}
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
 
 {% endblock %}

@@ -4,43 +4,60 @@
 
 {% block content %}
 
-<h1>Employees</h1>
+<div class="employees-container">
 
-{% if error %}
-    <p>{{ error }}</p>
-{% endif %}
+    <div class="employees-header">
+        <h1>Employees</h1>
 
-{% if employees %}
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>First name</th>
-                <th>Last name</th>
-                <th>Email</th>
-                <th>Position</th>
-                <th>Status</th>
-            </tr>
-        </thead>
+        <a href="{{ url_for('add_employee') }}" class="btn-primary">
+            Add Employee
+        </a>
+    </div>
 
-        <tbody>
-            {% for employee in employees %}
-                <tr>
-                    <td>{{ employee.id }}</td>
-                    <td>{{ employee.first_name }}</td>
-                    <td>{{ employee.last_name }}</td>
-                    <td>{{ employee.email }}</td>
-                    <td>{{ employee.position }}</td>
-                    <td>{{ employee.status }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-{% else %}
-    {% if not error %}
-        <p>No employees found.</p>
+    {% if error %}
+        <p class="error">{{ error }}</p>
     {% endif %}
-{% endif %}
+
+    {% if employees %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>First name</th>
+                        <th>Last name</th>
+                        <th>Email</th>
+                        <th>Position</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for employee in employees %}
+                        <tr>
+                            <td>{{ employee.id }}</td>
+                            <td>{{ employee.first_name }}</td>
+                            <td>{{ employee.last_name }}</td>
+                            <td>{{ employee.email }}</td>
+                            <td>{{ employee.position }}</td>
+
+                            <td>
+                                <span class="status-badge">
+                                    {{ employee.status }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    {% else %}
+        {% if not error %}
+            <p class="empty-message">No employees found.</p>
+        {% endif %}
+    {% endif %}
+
+</div>
 
 {% endblock %}

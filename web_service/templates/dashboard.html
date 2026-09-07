@@ -4,11 +4,34 @@
 
 {% block content %}
 
-<h1>Dashboard</h1>
+<div class="dashboard-container">
 
-<p>Total employees: {{ total_employees }}</p>
-<p>Active employees: {{ active_employees }}</p>
-<p>Inactive employees: {{ inactive_employees }}</p>
-<p>Total departments: {{ total_departments }}</p>
+    <h1>Dashboard</h1>
+
+    <div class="stats-grid">
+
+        <div class="stat-card">
+            <h3>Total Employees</h3>
+            <p>{{ total_employees }}</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Active Employees</h3>
+            <p>{{ active_employees }}</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Inactive Employees</h3>
+            <p>{{ inactive_employees }}</p>
+        </div>
+
+        <div class="stat-card">
+            <h3>Total Departments</h3>
+            <p>{{ total_departments }}</p>
+        </div>
+
+    </div>
+
+</div>
 
 {% endblock %}
