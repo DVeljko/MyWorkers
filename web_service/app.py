@@ -3,6 +3,7 @@ from forms import LoginForm, AddEmployee
 import os 
 from dotenv import load_dotenv
 import requests
+from datetime import datetime
 
 load_dotenv()
 
@@ -143,6 +144,107 @@ def employee_profile(employee_id):
         employee=None,
         error=error
     )
+
+
+@app.route("/employees/<int:employee_id>/edit", methods=["GET", "POST"])
+def edit_employee(employee_id):
+
+    token = session.get("access_token")
+
+    if not token:
+        return redirect(url_for("login"))
+
+    form = AddEmployee()
+
+    response = requests.get(
+        f"{EMPLOYEE_SERVICE_URL}/employees/{employee_id}",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
+        timeout=3
+    )
+
+    if response.status_code != 200:
+        error = response.json().get(
+            "error",
+            "Something went wrong."
+        )
+
+        return render_template(
+            "edit_employee.html",
+            form=form,
+            employee=None,
+            error=error
+        )
+
+    employee = response.json()
+
+    if form.validate_on_submit():
+
+        patch_response = requests.patch(
+            f"{EMPLOYEE_SERVICE_URL}/employees/{employee_id}",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+            json={
+                "first_name": form.first_name.data,
+                "last_name": form.last_name.data,
+                "email": form.email.data,
+                "phone": form.phone.data,
+                "position": form.position.data,
+                "hire_date": form.hire_date.data.isoformat(),
+                "salary": form.salary.data,
+                "status": form.status.data,
+                "department_id": form.department_id.data,
+            },
+            timeout=3
+        )
+
+        if patch_response.status_code == 200:
+            return redirect(
+                url_for(
+                    "employee_profile",
+                    employee_id=employee_id
+                )
+            )
+
+        error = patch_response.json().get(
+            "error",
+            "Something went wrong."
+        )
+
+        return render_template(
+            "edit_employee.html",
+            form=form,
+            employee=employee,
+            error=error
+        )
+
+    if request.method == "GET":
+        form.first_name.data = employee["first_name"]
+        form.last_name.data = employee["last_name"]
+        form.email.data = employee["email"]
+        form.phone.data = employee["phone"]
+        form.position.data = employee["position"]
+
+        form.hire_date.data = datetime.strptime(
+            employee["hire_date"],
+            "%Y-%m-%d"
+        ).date()
+
+        form.salary.data = employee["salary"]
+        form.status.data = employee["status"]
+        form.department_id.data = employee["department_id"]
+
+    return render_template(
+        "edit_employee.html",
+        form=form,
+        employee=employee
+    )
+
+
+
+
 
 @app.route("/dashboard")
 def dashboard():

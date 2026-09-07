@@ -72,6 +72,13 @@
                 <a href="{{ url_for('all_employees') }}" class="btn-secondary">
                     Back
                 </a>
+
+                <a
+                    href="{{ url_for('edit_employee', employee_id=employee.id) }}"
+                    class="btn-primary"
+                >
+                    Edit
+                </a>
             </div>
 
         </div>
