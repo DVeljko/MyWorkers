@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Employees{% endblock %}
+
+{% block content %}
+
+<h1>Employees</h1>
+
+{% if error %}
+    <p>{{ error }}</p>
+{% endif %}
+
+{% if employees %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>First name</th>
+                <th>Last name</th>
+                <th>Email</th>
+                <th>Position</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for employee in employees %}
+                <tr>
+                    <td>{{ employee.id }}</td>
+                    <td>{{ employee.first_name }}</td>
+                    <td>{{ employee.last_name }}</td>
+                    <td>{{ employee.email }}</td>
+                    <td>{{ employee.position }}</td>
+                    <td>{{ employee.status }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+{% else %}
+    {% if not error %}
+        <p>No employees found.</p>
+    {% endif %}
+{% endif %}
+
+{% endblock %}

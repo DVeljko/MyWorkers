@@ -41,6 +41,33 @@ def login():
 
     return render_template("login.html", form=form)
 
+@app.route("/employees")
+def all_employees():
+    token = session.get('access_token')
+    if not token:
+        return redirect(url_for('login'))
+
+    
+    response = requests.get(
+        f"{EMPLOYEE_SERVICE_URL}/employees",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
+        timeout=3
+
+    )
+
+    if response.status_code == 200:
+        employees = response.json()
+        return render_template(
+            "employees.html",
+            employees=employees
+        )
+
+    else:
+        error = response.json().get('error')
+        return render_template("employees.html", employees=[], error=error)
+
 @app.route("/dashboard")
 def dashboard():
     token = session.get('access_token')
