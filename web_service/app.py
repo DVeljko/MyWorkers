@@ -245,6 +245,32 @@ def edit_employee(employee_id):
 
 
 
+@app.route("/employee/<int:employee_id>/delete", methods=['POST'])
+def delete_employee(employee_id):
+    token = session.get('access_token')
+
+    if not token:
+        return redirect(url_for("login"))
+
+    response= requests.delete(
+        f"{EMPLOYEE_SERVICE_URL}/employee/{employee_id}",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
+        timeout=3
+    )
+
+    if response.status_code == 200:
+        return redirect(url_for("all_employees"))
+    
+    else:
+        error = response.json().get("error", "Something went wrong.")
+
+        return render_template(
+            "employee_profile.html",
+            employee=None,
+            error=error
+        )
 
 @app.route("/dashboard")
 def dashboard():
