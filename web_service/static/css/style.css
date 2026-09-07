@@ -506,3 +506,42 @@ a:hover {
     background: #e5e7eb;
     text-decoration: none;
 }
+
+.profile-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 35px;
+}
+
+.delete-form {
+    margin: 0;
+    padding: 0;
+    width: auto;
+    max-width: none;
+    background: transparent;
+    box-shadow: none;
+}
+
+.btn-danger {
+    display: inline-block;
+    width: auto;
+
+    padding: 11px 18px;
+
+    background: #dc2626;
+    color: white;
+
+    border: none;
+    border-radius: 6px;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.btn-danger:hover {
+    background: #b91c1c;
+}
