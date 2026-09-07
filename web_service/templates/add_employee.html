@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Add Employee{% endblock %}
+
+{% block content %}
+
+<h1>Add Employee</h1>
+
+{% if error %}
+    <p>{{ error }}</p>
+{% endif %}
+
+<form method="POST">
+
+    {{ form.hidden_tag() }}
+
+    <p>
+        {{ form.first_name.label }}<br>
+        {{ form.first_name() }}
+    </p>
+
+    <p>
+        {{ form.last_name.label }}<br>
+        {{ form.last_name() }}
+    </p>
+
+    <p>
+        {{ form.email.label }}<br>
+        {{ form.email() }}
+    </p>
+
+    <p>
+        {{ form.phone.label }}<br>
+        {{ form.phone() }}
+    </p>
+
+    <p>
+        {{ form.position.label }}<br>
+        {{ form.position() }}
+    </p>
+
+    <p>
+        {{ form.hire_date.label }}<br>
+        {{ form.hire_date() }}
+    </p>
+
+    <p>
+        {{ form.salary.label }}<br>
+        {{ form.salary() }}
+    </p>
+
+    <p>
+        {{ form.status.label }}<br>
+        {{ form.status() }}
+    </p>
+
+    <p>
+        {{ form.department_id.label }}<br>
+        {{ form.department_id() }}
+    </p>
+
+    <p>
+        {{ form.submit() }}
+    </p>
+
+</form>
+
+{% endblock %}
