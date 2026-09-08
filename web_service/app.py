@@ -12,7 +12,7 @@ app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 
 AUTH_SERVICE = os.getenv("AUTH_SERVICE")
 EMPLOYEE_SERVICE_URL = os.getenv("EMPLOYEE_SERVICE_URL")
-
+DEPARTMENT_SERVICE_URL = os.getenv("DEPARTMENT_SERVICE_URL")
 
 @app.route("/login", methods=['GET','POST'])
 def login():
@@ -300,7 +300,23 @@ def dashboard():
         total_departments=data["total_departments"]
     )
 
+@app.route("/departments")
+def departments():
+    token = session.get("access_token")
 
+    if not token:
+        return redirect(url_for("login"))
+
+    response = requests.get(
+        f"{DEPARTMENT_SERVICE_URL}/departments",
+        timeout=3
+    )
+
+    if response.status_code != 200:
+        return redirect(url_for('login'))
+
+    departments = response.json()
+    return render_template("departments.html", departments=departments)
 
 if __name__ == "__main__":
     app.run(debug=True)
