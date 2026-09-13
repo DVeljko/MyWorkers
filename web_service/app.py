@@ -350,6 +350,55 @@ def add_department():
 
     return render_template("add_department.html", form=form)
 
+@app.route("/department/<int:department_id>/edit", methods=['GET', 'POST'])
+def edit_department(department_id):
+
+    token = session.get('access_token')
+    if not token:
+        return redirect(url_for("login"))
+
+    form = AddDepartment()
+    response = requests.get(
+        f"{DEPARTMENT_SERVICE_URL}/departments/{department_id}",
+        timeout=3
+    )
+
+    if response.status_code != 200:
+        error = response.json().get(
+            "error",
+            "Something went wrong."
+        )
+
+        return render_template(
+            "edit_department.html",
+            form=form,
+            error=error
+        )
+
+    department = response.json()
+
+    if form.validate_on_submit():
+        edit_response = requests.patch(
+            f"{DEPARTMENT_SERVICE_URL}/departments/{department_id}",
+            json={
+                'name': form.name.data
+            },
+            timeout=3
+
+        )
+
+        if edit_response.status_code == 200:
+            return redirect(url_for("departments"))
+
+        error = edit_response.json().get('error')
+        return render_template('edit_department.html', form=form,error=error)
+
+
+    if request.method == "GET":
+        form.name.data= department['name']
+
+    return render_template('edit_department.html', form=form)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
