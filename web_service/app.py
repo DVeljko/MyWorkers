@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, session, redirect, url_for
-from forms import LoginForm, AddEmployee
+from forms import LoginForm, AddEmployee, AddDepartment
 import os 
 from dotenv import load_dotenv
 import requests
@@ -317,6 +317,39 @@ def departments():
 
     departments = response.json()
     return render_template("departments.html", departments=departments)
+
+@app.route("/department/add", methods=['GET','POST'])
+def add_department():
+    token = session.get('access_token')
+
+    if not token:
+        return redirect(url_for("login"))
+
+    form = AddDepartment()
+    if form.validate_on_submit():
+        name = form.name.data
+        response = requests.post(
+            f"{DEPARTMENT_SERVICE_URL}/departments",
+            json={
+                "name": name
+            },
+            timeout=3
+        )
+
+        if response.status_code == 201:
+            return redirect(url_for("departments"))
+
+        else:
+            error = response.json().get('error')
+            return render_template(
+                "add_department.html",
+                form=form,
+                error=error
+            )
+
+
+    return render_template("add_department.html", form=form)
+
 
 if __name__ == "__main__":
     app.run(debug=True)

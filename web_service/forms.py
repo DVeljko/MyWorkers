@@ -18,3 +18,7 @@ class AddEmployee(FlaskForm):
     status = StringField("Enter a status: ", validators=[DataRequired()])
     department_id = IntegerField("Enter a department id: ", validators=[DataRequired()])
     submit = SubmitField("Add employee")
+
+class AddDepartment(FlaskForm):
+    name = StringField("Department name: ", validators=[DataRequired()])
+    submit = SubmitField("Add Department")
