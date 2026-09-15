@@ -13,6 +13,7 @@ app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 AUTH_SERVICE = os.getenv("AUTH_SERVICE")
 EMPLOYEE_SERVICE_URL = os.getenv("EMPLOYEE_SERVICE_URL")
 DEPARTMENT_SERVICE_URL = os.getenv("DEPARTMENT_SERVICE_URL")
+ATTENDANCE_SERVICE_URL = os.getenv("ATTENDANCE_SERVICE_URL")
 
 @app.route("/login", methods=['GET','POST'])
 def login():
@@ -291,6 +292,7 @@ def dashboard():
         return redirect(url_for('login'))
 
     data = response.json()
+    print(data)
 
     return render_template(
         "dashboard.html",
@@ -416,7 +418,30 @@ def delete_department(department_id):
         return render_template('departments.html', error=error, departments=[])
 
     return redirect(url_for("departments"))
-    
+
+@app.route("/attendance")
+def attendance():
+    token = session.get('access_token')
+
+    if not token:
+        return redirect(url_for("login"))
+
+    response = requests.get(
+        f"{ATTENDANCE_SERVICE_URL}/attendance",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
+        timeout=3
+    )
+
+    if response.status_code == 200:
+        data = response.json()
+        return render_template("attendance.html", attendances=data)
+    else:
+        error = response.json().get('error')
+        return render_template("attendance.html", attendances=[], error=error)
+
+
 
 
 if __name__ == "__main__":
