@@ -395,9 +395,28 @@ def edit_department(department_id):
 
 
     if request.method == "GET":
-        form.name.data= department['name']
+        form.name.data = department['name']
 
-    return render_template('edit_department.html', form=form)
+    return render_template('edit_department.html', form=form, department=department)
+
+@app.route("/department/delete/<int:department_id>", methods=['POST'])
+def delete_department(department_id):
+
+    token = session.get('access_token')
+    if not token:
+        return redirect(url_for("login"))
+
+    response = requests.delete(
+        f"{DEPARTMENT_SERVICE_URL}/departments/{department_id}",
+        timeout=3
+    )
+
+    if response.status_code != 200:
+        error = response.json().get('error')
+        return render_template('departments.html', error=error, departments=[])
+
+    return redirect(url_for("departments"))
+    
 
 
 if __name__ == "__main__":
