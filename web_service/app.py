@@ -441,7 +441,42 @@ def attendance():
         error = response.json().get('error')
         return render_template("attendance.html", attendances=[], error=error)
 
+@app.route("/attendance/check-in/<int:employee_id>", methods=["POST"])
+def check_in(employee_id):
 
+    token = session.get("access_token")
+
+    if not token:
+        return redirect(url_for("login"))
+
+    response = requests.post(
+        f"{ATTENDANCE_SERVICE_URL}/attendance/{employee_id}",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
+        timeout=3
+    )
+
+    if response.status_code == 201:
+        return redirect(url_for("attendance"))
+
+    error = response.json().get("error")
+
+    attendance_response = requests.get(
+        f"{ATTENDANCE_SERVICE_URL}/attendance",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
+        timeout=3
+    )
+
+    attendances = attendance_response.json()
+
+    return render_template(
+        "attendance.html",
+        attendances=attendances,
+        error=error
+    )
 
 
 if __name__ == "__main__":

@@ -69,6 +69,7 @@
             </div>
 
             <div class="profile-actions">
+
                 <a href="{{ url_for('all_employees') }}" class="btn-secondary">
                     Back
                 </a>
@@ -81,6 +82,16 @@
                 </a>
 
                 <form
+                    action="{{ url_for('check_in', employee_id=employee.id) }}"
+                    method="POST"
+                    class="delete-form"
+                >
+                    <button type="submit" class="btn-primary">
+                        Check In
+                    </button>
+                </form>
+
+                <form
                     action="{{ url_for('delete_employee', employee_id=employee.id) }}"
                     method="POST"
                     class="delete-form"
@@ -89,6 +100,7 @@
                         Delete
                     </button>
                 </form>
+
             </div>
 
         </div>
