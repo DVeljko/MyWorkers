@@ -594,3 +594,32 @@ a:hover {
 .navbar-links .logout-link:hover {
     color: #ef4444;
 }
+
+.search-form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    margin: 25px 0;
+    padding: 0;
+
+    width: 100%;
+    max-width: none;
+
+    background: transparent;
+    box-shadow: none;
+}
+
+.search-form input {
+    width: 300px;
+    padding: 11px 14px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+
+    font-size: 14px;
+}
+
+.search-form button {
+    margin: 0;
+}

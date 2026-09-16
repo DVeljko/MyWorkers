@@ -14,6 +14,20 @@
         </a>
     </div>
 
+    <!-- Search -->
+    <form action="{{ url_for('all_employees') }}" method="GET" class="search-form">
+        <input
+            type="text"
+            name="search"
+            placeholder="Search employees..."
+            value="{{ request.args.get('search', '') }}"
+        >
+
+        <button type="submit" class="btn-primary">
+            Search
+        </button>
+    </form>
+
     {% if error %}
         <p class="error">{{ error }}</p>
     {% endif %}
@@ -43,13 +57,9 @@
                         <tr>
 
                             <td>{{ employee.id }}</td>
-
                             <td>{{ employee.first_name }}</td>
-
                             <td>{{ employee.last_name }}</td>
-
                             <td>{{ employee.email }}</td>
-
                             <td>{{ employee.position }}</td>
 
                             <td>

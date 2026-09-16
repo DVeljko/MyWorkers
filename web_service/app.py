@@ -49,6 +49,33 @@ def all_employees():
     if not token:
         return redirect(url_for('login'))
 
+    search = request.args.get("search")
+    if search:
+        response = requests.get(
+            f"{EMPLOYEE_SERVICE_URL}/employees",
+
+            params={
+                "name": search
+            },
+
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+
+            timeout=3
+        )
+
+        if response.status_code != 200:
+            error = response.json().get("error", "Something went wrong.")
+            return render_template(
+                "employees.html",
+                employees=[],
+                error=error
+            )
+
+        employee_list = response.json()
+        return render_template("employees.html", employees=employee_list)
+
     
     response = requests.get(
         f"{EMPLOYEE_SERVICE_URL}/employees",
@@ -67,7 +94,7 @@ def all_employees():
         )
 
     else:
-        error = response.json().get('error')
+        error = response.json().get('error', "Something went wrong.")
         return render_template("employees.html", employees=[], error=error)
 
 @app.route("/employees/add", methods=["GET", "POST"])
