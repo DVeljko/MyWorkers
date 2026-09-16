@@ -478,6 +478,42 @@ def check_in(employee_id):
         error=error
     )
 
+@app.route("/attendance/check-out/<int:employee_id>", methods=['POST'])
+def check_out(employee_id):
+    token = session.get("access_token")
+    if not token:
+        return redirect(url_for("login"))
+
+    response = requests.patch(
+        f"{ATTENDANCE_SERVICE_URL}/attendance/{employee_id}",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
+        timeout=3
+    )
+
+    if response.status_code == 200:
+        return redirect(url_for("attendance"))
+
+    error = response.json().get('error')
+
+    attendance_response = requests.get(
+        f"{ATTENDANCE_SERVICE_URL}/attendance",
+                headers={
+            "Authorization": f"Bearer {token}"
+        },
+        timeout=3
+
+    )
+
+    attendances = attendance_response.json()
+
+    return render_template(
+        "attendance.html",
+        attendances=attendances,
+        error=error
+    )
+
 
 if __name__ == "__main__":
     app.run(debug=True)

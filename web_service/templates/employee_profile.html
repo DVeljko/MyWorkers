@@ -92,6 +92,16 @@
                 </form>
 
                 <form
+                    action="{{ url_for('check_out', employee_id=employee.id) }}"
+                    method="POST"
+                    class="delete-form"
+                >
+                    <button type="submit" class="btn-primary">
+                        Check Out
+                    </button>
+                </form>
+
+                <form
                     action="{{ url_for('delete_employee', employee_id=employee.id) }}"
                     method="POST"
                     class="delete-form"
