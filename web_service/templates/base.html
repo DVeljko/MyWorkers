@@ -15,6 +15,28 @@
 
 <body>
 
+    {% if session.get("access_token") %}
+
+    <nav class="navbar">
+        <div class="navbar-container">
+
+            <a href="{{ url_for('dashboard') }}" class="navbar-logo">
+                MyWorkers
+            </a>
+
+            <div class="navbar-links">
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('all_employees') }}">Employees</a>
+                <a href="{{ url_for('departments') }}">Departments</a>
+                <a href="{{ url_for('attendance') }}">Attendance</a>
+                <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
+            </div>
+
+        </div>
+    </nav>
+
+    {% endif %}
+
     {% block content %}
     {% endblock %}
 

@@ -545,3 +545,52 @@ a:hover {
 .btn-danger:hover {
     background: #b91c1c;
 }
+
+
+.navbar {
+    background: #1f2937;
+    padding: 0 40px;
+}
+
+.navbar-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    height: 70px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.navbar-logo {
+    color: white;
+    font-size: 22px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.navbar-links {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.navbar-links a {
+    color: #d1d5db;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    transition: 0.2s;
+}
+
+.navbar-links a:hover {
+    color: white;
+}
+
+.navbar-links .logout-link {
+    color: #f87171;
+}
+
+.navbar-links .logout-link:hover {
+    color: #ef4444;
+}
