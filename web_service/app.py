@@ -367,9 +367,13 @@ def dashboard():
         timeout=3
     )
 
-    if response.status_code != 200:
-        return redirect(url_for('login'))
+    if response.status_code == 401:
+        session.clear()
+        return redirect(url_for("login"))
 
+    if response.status_code != 200:
+        return redirect(url_for("login"))
+    
     data = response.json()
     print(data)
 
