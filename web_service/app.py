@@ -15,6 +15,14 @@ EMPLOYEE_SERVICE_URL = os.getenv("EMPLOYEE_SERVICE_URL")
 DEPARTMENT_SERVICE_URL = os.getenv("DEPARTMENT_SERVICE_URL")
 ATTENDANCE_SERVICE_URL = os.getenv("ATTENDANCE_SERVICE_URL")
 
+
+def handle_unauthorized(response):
+    if response.status_code == 401:
+        session.clear()
+        return True
+
+    return False
+
 @app.route("/login", methods=['GET','POST'])
 def login():
     form = LoginForm()
@@ -65,6 +73,9 @@ def all_employees():
             timeout=3
         )
 
+        if handle_unauthorized(response):
+            return redirect(url_for("login"))
+
         if response.status_code != 200:
             error = response.json().get("error", "Something went wrong.")
             return render_template(
@@ -85,6 +96,10 @@ def all_employees():
         timeout=3
 
     )
+
+    if handle_unauthorized(response):
+        return redirect(url_for("login"))
+
 
     if response.status_code == 200:
         employees = response.json()
@@ -112,6 +127,7 @@ def add_employee():
         f"{DEPARTMENT_SERVICE_URL}/departments",
         timeout=3
     )
+    
 
     if department_response.status_code == 200:
         departments = department_response.json()
@@ -141,6 +157,11 @@ def add_employee():
             },
             timeout=3
         )
+
+        if handle_unauthorized(response):
+            return redirect(url_for("login"))
+
+        
 
         if response.status_code == 201:
             return redirect(url_for("all_employees"))
@@ -178,6 +199,11 @@ def employee_profile(employee_id):
         timeout=3
     )
 
+
+    if handle_unauthorized(response):
+        return redirect(url_for("login"))
+
+    
     if response.status_code == 200:
         employee = response.json()
         department_id = employee['department_id']
@@ -244,6 +270,10 @@ def edit_employee(employee_id):
         timeout=3
     )
 
+    if handle_unauthorized(response):
+        return redirect(url_for("login"))
+    
+
     if response.status_code != 200:
         error = response.json().get(
             "error",
@@ -279,6 +309,9 @@ def edit_employee(employee_id):
             },
             timeout=3
         )
+
+        if handle_unauthorized(patch_response):
+            return redirect(url_for("login"))
 
         if patch_response.status_code == 200:
             return redirect(
@@ -340,6 +373,9 @@ def delete_employee(employee_id):
         timeout=3
     )
 
+    if handle_unauthorized(response):
+        return redirect(url_for("login"))
+
     if response.status_code == 200:
         return redirect(url_for("all_employees"))
     
@@ -367,11 +403,7 @@ def dashboard():
         timeout=3
     )
 
-    if response.status_code == 401:
-        session.clear()
-        return redirect(url_for("login"))
-
-    if response.status_code != 200:
+    if handle_unauthorized(response):
         return redirect(url_for("login"))
     
     data = response.json()
@@ -517,6 +549,9 @@ def attendance():
         timeout=3
     )
 
+    if handle_unauthorized(response):
+        return redirect(url_for("login"))
+
     if response.status_code == 200:
         data = response.json()
 
@@ -563,6 +598,10 @@ def check_in(employee_id):
         timeout=3
     )
 
+    if handle_unauthorized(response):
+        return redirect(url_for("login"))
+
+
     if response.status_code == 201:
         return redirect(url_for("attendance"))
 
@@ -575,6 +614,10 @@ def check_in(employee_id):
         },
         timeout=3
     )
+
+    if handle_unauthorized(attendance_response):
+        return redirect(url_for("login"))
+
 
     attendances = attendance_response.json()
 
@@ -598,6 +641,10 @@ def check_out(employee_id):
         timeout=3
     )
 
+    if handle_unauthorized(response):
+        return redirect(url_for("login"))
+
+
     if response.status_code == 200:
         return redirect(url_for("attendance"))
 
@@ -611,6 +658,10 @@ def check_out(employee_id):
         timeout=3
 
     )
+
+    if handle_unauthorized(attendance_response):
+        return redirect(url_for("login"))
+
 
     attendances = attendance_response.json()
 

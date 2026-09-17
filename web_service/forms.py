@@ -15,7 +15,7 @@ class AddEmployee(FlaskForm):
     position = StringField("Enter a position: ", validators=[DataRequired()])
     hire_date = DateField("Hire date: ", validators=[DataRequired()])
     salary = FloatField("Enter a salary: ", validators=[DataRequired()])
-    status = StringField("Enter a status: ", validators=[DataRequired()])
+    status = SelectField("Status: ",choices=[("active", "Active"),("inactive", "Inactive")],validators=[DataRequired()])
     department_id = SelectField("Department: ",coerce=int, validators=[DataRequired()])
     submit = SubmitField("Add employee")
 
