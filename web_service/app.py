@@ -159,10 +159,27 @@ def employee_profile(employee_id):
 
     if response.status_code == 200:
         employee = response.json()
+        department_id = employee['department_id']
+
+        department_response = requests.get(
+            f"{DEPARTMENT_SERVICE_URL}/departments/{department_id}",
+            timeout=3
+        )
+
+        if department_response.status_code != 200:
+            return render_template(
+                "employee_profile.html",
+                employee=employee,
+                error="Could not load department"
+            )
+
+        department = department_response.json()
+        department_name = department['name']
 
         return render_template(
             "employee_profile.html",
-            employee=employee
+            employee=employee,
+            department_name = department_name
         )
 
     error = response.json().get("error", "Something went wrong.")
