@@ -465,7 +465,7 @@ def delete_department(department_id):
 
 @app.route("/attendance")
 def attendance():
-    token = session.get('access_token')
+    token = session.get("access_token")
 
     if not token:
         return redirect(url_for("login"))
@@ -480,10 +480,33 @@ def attendance():
 
     if response.status_code == 200:
         data = response.json()
-        return render_template("attendance.html", attendances=data)
-    else:
-        error = response.json().get('error')
-        return render_template("attendance.html", attendances=[], error=error)
+
+        for attendance in data:
+
+            attendance["arrival_time"] = datetime.fromisoformat(
+                attendance["arrival_time"]
+            ).strftime("%d.%m.%Y. %H:%M")
+
+            if attendance["departure_time"]:
+                attendance["departure_time"] = datetime.fromisoformat(
+                    attendance["departure_time"]
+                ).strftime("%d.%m.%Y. %H:%M")
+
+        return render_template(
+            "attendance.html",
+            attendances=data
+        )
+
+    error = response.json().get(
+        "error",
+        "Something went wrong."
+    )
+
+    return render_template(
+        "attendance.html",
+        attendances=[],
+        error=error
+    )
 
 @app.route("/attendance/check-in/<int:employee_id>", methods=["POST"])
 def check_in(employee_id):
