@@ -101,11 +101,28 @@ def all_employees():
 def add_employee():
 
     token = session.get("access_token")
+
     if not token:
         return redirect(url_for("login"))
-    
+
     form = AddEmployee()
+
+    # Get departments from department_service
+    department_response = requests.get(
+        f"{DEPARTMENT_SERVICE_URL}/departments",
+        timeout=3
+    )
+
+    if department_response.status_code == 200:
+        departments = department_response.json()
+
+        form.department_id.choices = [
+            (department["id"], department["name"])
+            for department in departments
+        ]
+
     if form.validate_on_submit():
+
         response = requests.post(
             f"{EMPLOYEE_SERVICE_URL}/employees",
             headers={
@@ -128,17 +145,21 @@ def add_employee():
         if response.status_code == 201:
             return redirect(url_for("all_employees"))
 
-        else:
-            error = response.json().get("error", "Something went wrong.")
-            return render_template(
-                "add_employee.html",
-                form=form,
-                error=error
-            )
+        error = response.json().get(
+            "error",
+            "Something went wrong."
+        )
 
+        return render_template(
+            "add_employee.html",
+            form=form,
+            error=error
+        )
 
-
-    return render_template("add_employee.html", form=form)
+    return render_template(
+        "add_employee.html",
+        form=form
+    )
 
 
 @app.route("/employees/<int:employee_id>")
@@ -200,6 +221,20 @@ def edit_employee(employee_id):
         return redirect(url_for("login"))
 
     form = AddEmployee()
+
+
+    department_response = requests.get(
+        f"{DEPARTMENT_SERVICE_URL}/departments",
+        timeout=3
+    )
+
+    if department_response.status_code == 200:
+        departments = department_response.json()
+
+        form.department_id.choices = [
+            (department["id"], department["name"])
+            for department in departments
+        ]
 
     response = requests.get(
         f"{EMPLOYEE_SERVICE_URL}/employees/{employee_id}",
