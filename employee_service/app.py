@@ -73,15 +73,27 @@ def show_employees_by_department(department_id):
     return jsonify(employees)
     
 
-@app.route("/employees/<int:employee_id>", methods=['GET'])
+@app.route("/employees/<int:employee_id>", methods=["GET"])
 @jwt_required()
 def single_employee(employee_id):
 
     claim = get_jwt()
-    if claim['role'] not in ['admin','manager']:
-        return jsonify({"error":"Only admin or manager can see employee"}), 403
-    
+
+    if claim["role"] == "employee":
+        if claim["employee_id"] != employee_id:
+            return jsonify({
+                "error": "You can only view your own profile"
+            }), 403
+
+    elif claim["role"] not in ["admin", "manager"]:
+        return jsonify({
+            "error": "Access denied"
+        }), 403
+
     employee = db.get_or_404(Employee, employee_id)
+    if not employee:
+        return jsonify({"error": "Employee not found"}), 404
+
     return jsonify(employee.to_dict())
 
 
