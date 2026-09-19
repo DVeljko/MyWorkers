@@ -20,16 +20,67 @@
     <nav class="navbar">
         <div class="navbar-container">
 
-            <a href="{{ url_for('dashboard') }}" class="navbar-logo">
-                MyWorkers
-            </a>
+            {% if session.get("role") in ["admin", "manager"] %}
+
+                <a href="{{ url_for('dashboard') }}" class="navbar-logo">
+                    MyWorkers
+                </a>
+
+            {% else %}
+
+                <a
+                    href="{{ url_for(
+                        'employee_profile',
+                        employee_id=session.get('employee_id')
+                    ) }}"
+                    class="navbar-logo"
+                >
+                    MyWorkers
+                </a>
+
+            {% endif %}
+
 
             <div class="navbar-links">
-                <a href="{{ url_for('dashboard') }}">Dashboard</a>
-                <a href="{{ url_for('all_employees') }}">Employees</a>
-                <a href="{{ url_for('departments') }}">Departments</a>
-                <a href="{{ url_for('attendance') }}">Attendance</a>
-                <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
+
+                {% if session.get("role") in ["admin", "manager"] %}
+
+                    <a href="{{ url_for('dashboard') }}">
+                        Dashboard
+                    </a>
+
+                    <a href="{{ url_for('all_employees') }}">
+                        Employees
+                    </a>
+
+                    <a href="{{ url_for('departments') }}">
+                        Departments
+                    </a>
+
+                    <a href="{{ url_for('attendance') }}">
+                        Attendance
+                    </a>
+
+                {% else %}
+
+                    <a
+                        href="{{ url_for(
+                            'employee_profile',
+                            employee_id=session.get('employee_id')
+                        ) }}"
+                    >
+                        My Profile
+                    </a>
+
+                {% endif %}
+
+                <a
+                    href="{{ url_for('logout') }}"
+                    class="logout-link"
+                >
+                    Logout
+                </a>
+
             </div>
 
         </div>

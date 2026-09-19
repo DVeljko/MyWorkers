@@ -23,9 +23,10 @@ def handle_unauthorized(response):
 
     return False
 
-@app.route("/login", methods=['GET','POST'])
+@app.route("/login", methods=["GET", "POST"])
 def login():
     form = LoginForm()
+
     if form.validate_on_submit():
         email = form.email.data
         password = form.password.data
@@ -41,15 +42,40 @@ def login():
 
         if response.status_code == 200:
             data = response.json()
-            access_token = data['access_token']
-            session['access_token'] = access_token
 
+            access_token = data["access_token"]
+            role = data["role"]
+            employee_id = data["employee_id"]
+
+            session["access_token"] = access_token
+            session["role"] = role
+            session["employee_id"] = employee_id
+
+            # Employee ide direktno na svoj profil
+            if role == "employee":
+                return redirect(
+                    url_for(
+                        "employee_profile",
+                        employee_id=employee_id
+                    )
+                )
+
+            # Admin i manager idu na dashboard
             return redirect(url_for("dashboard"))
+
         else:
             error = response.json().get("error")
-            return render_template("login.html", form=form, error=error)
 
-    return render_template("login.html", form=form)
+            return render_template(
+                "login.html",
+                form=form,
+                error=error
+            )
+
+    return render_template(
+        "login.html",
+        form=form
+    )
 
 @app.route("/employees")
 def all_employees():

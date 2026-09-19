@@ -91,7 +91,13 @@ def login():
                                        }
                                     )
     
-    return jsonify({"access_token": access_token}), 200
+    return jsonify(
+        {
+            "access_token": access_token,
+            "role": user_exists.role,
+            "employee_id": user_exists.employee_id
+         }
+        ), 200
 
 
 @app.route("/users/<int:user_id>/role", methods=['PATCH'])

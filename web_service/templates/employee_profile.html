@@ -70,46 +70,59 @@
 
             <div class="profile-actions">
 
-                <a href="{{ url_for('all_employees') }}" class="btn-secondary">
-                    Back
-                </a>
+                {% if session.get("role") in ["admin", "manager"] %}
+                    <a href="{{ url_for('all_employees') }}" class="btn-secondary">
+                        Back
+                    </a>
+                {% endif %}
 
-                <a
-                    href="{{ url_for('edit_employee', employee_id=employee.id) }}"
-                    class="btn-primary"
-                >
-                    Edit
-                </a>
 
-                <form
-                    action="{{ url_for('check_in', employee_id=employee.id) }}"
-                    method="POST"
-                    class="delete-form"
-                >
-                    <button type="submit" class="btn-primary">
-                        Check In
-                    </button>
-                </form>
+                {% if session.get("role") == "admin" %}
+                    <a
+                        href="{{ url_for('edit_employee', employee_id=employee.id) }}"
+                        class="btn-primary"
+                    >
+                        Edit
+                    </a>
+                {% endif %}
 
-                <form
-                    action="{{ url_for('check_out', employee_id=employee.id) }}"
-                    method="POST"
-                    class="delete-form"
-                >
-                    <button type="submit" class="btn-primary">
-                        Check Out
-                    </button>
-                </form>
 
-                <form
-                    action="{{ url_for('delete_employee', employee_id=employee.id) }}"
-                    method="POST"
-                    class="delete-form"
-                >
-                    <button type="submit" class="btn-danger">
-                        Delete
-                    </button>
-                </form>
+                {% if session.get("role") in ["admin", "employee"] %}
+
+                    <form
+                        action="{{ url_for('check_in', employee_id=employee.id) }}"
+                        method="POST"
+                        class="delete-form"
+                    >
+                        <button type="submit" class="btn-primary">
+                            Check In
+                        </button>
+                    </form>
+
+                    <form
+                        action="{{ url_for('check_out', employee_id=employee.id) }}"
+                        method="POST"
+                        class="delete-form"
+                    >
+                        <button type="submit" class="btn-primary">
+                            Check Out
+                        </button>
+                    </form>
+
+                {% endif %}
+
+
+                {% if session.get("role") == "admin" %}
+                    <form
+                        action="{{ url_for('delete_employee', employee_id=employee.id) }}"
+                        method="POST"
+                        class="delete-form"
+                    >
+                        <button type="submit" class="btn-danger">
+                            Delete
+                        </button>
+                    </form>
+                {% endif %}
 
             </div>
 
