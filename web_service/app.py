@@ -50,6 +50,22 @@ def roles_required(*allowed_roles):
 
     return decorator
 
+@app.route("/")
+def index():
+
+    token = session.get('access_token')
+    employee_role = session.get("role")
+    employee_id = session.get("employee_id")
+
+    if not token:
+        return redirect(url_for("login"))
+
+    if employee_role == "employee":
+        return redirect(url_for("employee_profile", employee_id=employee_id))
+
+    return redirect(url_for("dashboard"))
+    
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     form = LoginForm()
