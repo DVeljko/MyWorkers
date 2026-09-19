@@ -627,11 +627,20 @@ def check_in(employee_id):
     if handle_unauthorized(response):
         return redirect(url_for("login"))
 
-
     if response.status_code == 201:
+        if session.get("role") == "employee":
+            return redirect(url_for("my_attendance"))
+
         return redirect(url_for("attendance"))
 
     error = response.json().get("error")
+
+    if session.get("role") == "employee":
+        return render_template(
+            "my_attendance.html",
+            attendances=[],
+            error=error
+        )
 
     attendance_response = requests.get(
         f"{ATTENDANCE_SERVICE_URL}/attendance",
@@ -644,7 +653,6 @@ def check_in(employee_id):
     if handle_unauthorized(attendance_response):
         return redirect(url_for("login"))
 
-
     attendances = attendance_response.json()
 
     return render_template(
@@ -653,9 +661,11 @@ def check_in(employee_id):
         error=error
     )
 
-@app.route("/attendance/check-out/<int:employee_id>", methods=['POST'])
+@app.route("/attendance/check-out/<int:employee_id>", methods=["POST"])
 def check_out(employee_id):
+
     token = session.get("access_token")
+
     if not token:
         return redirect(url_for("login"))
 
@@ -670,24 +680,31 @@ def check_out(employee_id):
     if handle_unauthorized(response):
         return redirect(url_for("login"))
 
-
     if response.status_code == 200:
+        if session.get("role") == "employee":
+            return redirect(url_for("my_attendance"))
+
         return redirect(url_for("attendance"))
 
-    error = response.json().get('error')
+    error = response.json().get("error")
+
+    if session.get("role") == "employee":
+        return render_template(
+            "my_attendance.html",
+            attendances=[],
+            error=error
+        )
 
     attendance_response = requests.get(
         f"{ATTENDANCE_SERVICE_URL}/attendance",
-                headers={
+        headers={
             "Authorization": f"Bearer {token}"
         },
         timeout=3
-
     )
 
     if handle_unauthorized(attendance_response):
         return redirect(url_for("login"))
-
 
     attendances = attendance_response.json()
 
@@ -701,6 +718,42 @@ def check_out(employee_id):
 def logout():
     session.clear()
     return redirect(url_for('login'))
+
+@app.route("/my-attendance")
+def my_attendance():
+    token = session.get("access_token")
+    employee_id = session.get("employee_id")
+
+    if not token:
+        return redirect(url_for("login"))
+
+    response = requests.get(
+        f"{ATTENDANCE_SERVICE_URL}/employee/{employee_id}/attendance",
+        headers={
+            "Authorization": f"Bearer {token}"
+        },
+        timeout=3
+    )
+
+    if handle_unauthorized(response):
+        return redirect(url_for("login"))
+
+    
+    if response.status_code != 200:
+        error = response.json().get("error")
+
+        return render_template(
+            "my_attendance.html",
+            attendances=[],
+            error=error
+        )
+
+    attendances = response.json()
+
+    return render_template(
+        "my_attendance.html",
+        attendances=attendances
+    )
 
 
 if __name__ == "__main__":

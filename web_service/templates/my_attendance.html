@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}My Attendance{% endblock %}
+
+{% block content %}
+
+<div class="employees-container">
+
+    <div class="employees-header">
+        <h1>My Attendance</h1>
+    </div>
+
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+
+    {% if attendances %}
+
+        <div class="table-wrapper">
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Arrival Time</th>
+                        <th>Departure Time</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for attendance in attendances %}
+                        <tr>
+                            <td>{{ attendance.id }}</td>
+
+                            <td>
+                                {{ attendance.arrival_time }}
+                            </td>
+
+                            <td>
+                                {% if attendance.departure_time %}
+                                    {{ attendance.departure_time }}
+                                {% else %}
+                                    Not checked out
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+
+    {% else %}
+
+        {% if not error %}
+            <p class="empty-message">
+                No attendance records found.
+            </p>
+        {% endif %}
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
