@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 import requests
 from datetime import datetime
+from functools import wraps
 
 load_dotenv()
 
@@ -22,6 +23,32 @@ def handle_unauthorized(response):
         return True
 
     return False
+
+def roles_required(*allowed_roles):
+    def decorator(f):
+        @wraps(f)
+        def check_role(*args, **kwargs):
+
+            if not session.get("access_token"):
+                return redirect(url_for("login"))
+
+            if session.get("role") not in allowed_roles:
+
+                if session.get("role") == "employee":
+                    return redirect(
+                        url_for(
+                            "employee_profile",
+                            employee_id=session.get("employee_id")
+                        )
+                    )
+
+                return redirect(url_for("dashboard"))
+
+            return f(*args, **kwargs)
+
+        return check_role
+
+    return decorator
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -78,6 +105,7 @@ def login():
     )
 
 @app.route("/employees")
+@roles_required("admin", "manager")
 def all_employees():
     token = session.get('access_token')
     if not token:
@@ -139,6 +167,7 @@ def all_employees():
         return render_template("employees.html", employees=[], error=error)
 
 @app.route("/employees/add", methods=["GET", "POST"])
+@roles_required("admin")
 def add_employee():
 
     token = session.get("access_token")
@@ -265,6 +294,7 @@ def employee_profile(employee_id):
 
 
 @app.route("/employees/<int:employee_id>/edit", methods=["GET", "POST"])
+@roles_required("admin")
 def edit_employee(employee_id):
 
     token = session.get("access_token")
@@ -385,6 +415,7 @@ def edit_employee(employee_id):
 
 
 @app.route("/employee/<int:employee_id>/delete", methods=['POST'])
+@roles_required("admin")
 def delete_employee(employee_id):
     token = session.get('access_token')
 
@@ -415,6 +446,7 @@ def delete_employee(employee_id):
         )
 
 @app.route("/dashboard")
+@roles_required("admin", "manager")
 def dashboard():
     token = session.get('access_token')
 
@@ -444,6 +476,7 @@ def dashboard():
     )
 
 @app.route("/departments")
+@roles_required("admin", "manager")
 def departments():
     token = session.get("access_token")
 
@@ -462,6 +495,7 @@ def departments():
     return render_template("departments.html", departments=departments)
 
 @app.route("/department/add", methods=['GET','POST'])
+@roles_required("admin")
 def add_department():
     token = session.get('access_token')
 
@@ -494,6 +528,7 @@ def add_department():
     return render_template("add_department.html", form=form)
 
 @app.route("/department/<int:department_id>/edit", methods=['GET', 'POST'])
+@roles_required("admin")
 def edit_department(department_id):
 
     token = session.get('access_token')
@@ -543,6 +578,7 @@ def edit_department(department_id):
     return render_template('edit_department.html', form=form, department=department)
 
 @app.route("/department/delete/<int:department_id>", methods=['POST'])
+@roles_required("admin")
 def delete_department(department_id):
 
     token = session.get('access_token')
@@ -561,6 +597,7 @@ def delete_department(department_id):
     return redirect(url_for("departments"))
 
 @app.route("/attendance")
+@roles_required("admin", "manager")
 def attendance():
     token = session.get("access_token")
 
