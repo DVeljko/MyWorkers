@@ -24,6 +24,12 @@ def handle_unauthorized(response):
 
     return False
 
+def service_request_failed(error):
+    return render_template(
+        "service_error.html",
+        error="Service is currently unavailable."
+    ), 503
+
 def roles_required(*allowed_roles):
     def decorator(f):
         @wraps(f)
@@ -469,13 +475,16 @@ def dashboard():
     if not token:
         return redirect(url_for('login'))
 
-    response = requests.get(
-        f"{EMPLOYEE_SERVICE_URL}/dashboard",
-        headers={
-            "Authorization": f"Bearer {token}"
-        },
-        timeout=3
-    )
+    try:
+        response = requests.get(
+            f"{EMPLOYEE_SERVICE_URL}/dashboard",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+            timeout=3
+        )
+    except requests.exceptions.RequestException as error:
+        return service_request_failed(error)
 
     if handle_unauthorized(response):
         return redirect(url_for("login"))

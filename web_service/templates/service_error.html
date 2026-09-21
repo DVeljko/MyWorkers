@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Service Unavailable{% endblock %}
+
+{% block content %}
+
+<div class="employees-container">
+
+    <div class="employees-header">
+        <h1>Service Unavailable</h1>
+    </div>
+
+    <p class="error">
+        {{ error }}
+    </p>
+
+    <a href="{{ url_for('index') }}" class="btn-primary">
+        Go Back
+    </a>
+
+</div>
+
+{% endblock %}
