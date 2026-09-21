@@ -80,14 +80,18 @@ def login():
         email = form.email.data
         password = form.password.data
 
-        response = requests.post(
-            f"{AUTH_SERVICE}/login",
-            json={
-                "email": email,
-                "password": password
-            },
-            timeout=3
-        )
+        try:
+            response = requests.post(
+                f"{AUTH_SERVICE}/login",
+                json={
+                    "email": email,
+                    "password": password
+                },
+                timeout=3
+            )
+
+        except requests.exceptions.RequestException:
+            return service_request_failed()
 
         if response.status_code == 200:
             data = response.json()
@@ -135,19 +139,24 @@ def all_employees():
 
     search = request.args.get("search")
     if search:
-        response = requests.get(
-            f"{EMPLOYEE_SERVICE_URL}/employees",
 
-            params={
-                "name": search
-            },
+        try:
+            response = requests.get(
+                f"{EMPLOYEE_SERVICE_URL}/employees",
 
-            headers={
-                "Authorization": f"Bearer {token}"
-            },
+                params={
+                    "name": search
+                },
 
-            timeout=3
-        )
+                headers={
+                    "Authorization": f"Bearer {token}"
+                },
+
+                timeout=3
+            )
+
+        except requests.exceptions.RequestException:
+            return service_request_failed()
 
         if handle_unauthorized(response):
             return redirect(url_for("login"))
@@ -163,15 +172,18 @@ def all_employees():
         employee_list = response.json()
         return render_template("employees.html", employees=employee_list)
 
-    
-    response = requests.get(
-        f"{EMPLOYEE_SERVICE_URL}/employees",
-        headers={
-            "Authorization": f"Bearer {token}"
-        },
-        timeout=3
+    try:
+        response = requests.get(
+            f"{EMPLOYEE_SERVICE_URL}/employees",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+            timeout=3
 
-    )
+        )
+
+    except requests.exceptions.RequestException:
+        return service_request_failed()
 
     if handle_unauthorized(response):
         return redirect(url_for("login"))
@@ -200,10 +212,13 @@ def add_employee():
     form = AddEmployee()
 
     # Get departments from department_service
-    department_response = requests.get(
-        f"{DEPARTMENT_SERVICE_URL}/departments",
-        timeout=3
-    )
+    try:
+        department_response = requests.get(
+            f"{DEPARTMENT_SERVICE_URL}/departments",
+            timeout=3
+        )
+    except requests.exceptions.RequestException:
+        return service_request_failed()
     
 
     if department_response.status_code == 200:
@@ -216,24 +231,29 @@ def add_employee():
 
     if form.validate_on_submit():
 
-        response = requests.post(
-            f"{EMPLOYEE_SERVICE_URL}/employees",
-            headers={
-                "Authorization": f"Bearer {token}"
-            },
-            json={
-                "first_name": form.first_name.data,
-                "last_name": form.last_name.data,
-                "email": form.email.data,
-                "phone": form.phone.data,
-                "position": form.position.data,
-                "hire_date": form.hire_date.data.isoformat(),
-                "salary": form.salary.data,
-                "status": form.status.data,
-                "department_id": form.department_id.data,
-            },
-            timeout=3
-        )
+        try:
+
+            response = requests.post(
+                f"{EMPLOYEE_SERVICE_URL}/employees",
+                headers={
+                    "Authorization": f"Bearer {token}"
+                },
+                json={
+                    "first_name": form.first_name.data,
+                    "last_name": form.last_name.data,
+                    "email": form.email.data,
+                    "phone": form.phone.data,
+                    "position": form.position.data,
+                    "hire_date": form.hire_date.data.isoformat(),
+                    "salary": form.salary.data,
+                    "status": form.status.data,
+                    "department_id": form.department_id.data,
+                },
+                timeout=3
+            )
+
+        except requests.exceptions.RequestException:
+            return service_request_failed()
 
         if handle_unauthorized(response):
             return redirect(url_for("login"))
@@ -268,13 +288,18 @@ def employee_profile(employee_id):
     if not token:
         return redirect(url_for("login"))
 
-    response = requests.get(
-        f"{EMPLOYEE_SERVICE_URL}/employees/{employee_id}",
-        headers={
-            "Authorization": f"Bearer {token}"
-        },
-        timeout=3
-    )
+    try:
+
+        response = requests.get(
+            f"{EMPLOYEE_SERVICE_URL}/employees/{employee_id}",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+            timeout=3
+        )
+
+    except requests.exceptions.RequestException:
+        return service_request_failed()
 
 
     if handle_unauthorized(response):
@@ -285,10 +310,15 @@ def employee_profile(employee_id):
         employee = response.json()
         department_id = employee['department_id']
 
-        department_response = requests.get(
-            f"{DEPARTMENT_SERVICE_URL}/departments/{department_id}",
-            timeout=3
-        )
+        try:
+
+            department_response = requests.get(
+                f"{DEPARTMENT_SERVICE_URL}/departments/{department_id}",
+                timeout=3
+            )
+
+        except requests.exceptions.RequestException:
+            return service_request_failed()
 
         if department_response.status_code != 200:
             return render_template(
@@ -326,11 +356,14 @@ def edit_employee(employee_id):
 
     form = AddEmployee()
 
+    try:
+        department_response = requests.get(
+            f"{DEPARTMENT_SERVICE_URL}/departments",
+            timeout=3
+        )
 
-    department_response = requests.get(
-        f"{DEPARTMENT_SERVICE_URL}/departments",
-        timeout=3
-    )
+    except requests.exceptions.RequestException:
+        return service_request_failed()
 
     if department_response.status_code == 200:
         departments = department_response.json()
@@ -340,13 +373,16 @@ def edit_employee(employee_id):
             for department in departments
         ]
 
-    response = requests.get(
-        f"{EMPLOYEE_SERVICE_URL}/employees/{employee_id}",
-        headers={
-            "Authorization": f"Bearer {token}"
-        },
-        timeout=3
-    )
+    try:
+        response = requests.get(
+            f"{EMPLOYEE_SERVICE_URL}/employees/{employee_id}",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+            timeout=3
+        )
+    except requests.exceptions.RequestException:
+        return service_request_failed()
 
     if handle_unauthorized(response):
         return redirect(url_for("login"))
@@ -369,24 +405,28 @@ def edit_employee(employee_id):
 
     if form.validate_on_submit():
 
-        patch_response = requests.patch(
-            f"{EMPLOYEE_SERVICE_URL}/employees/{employee_id}",
-            headers={
-                "Authorization": f"Bearer {token}"
-            },
-            json={
-                "first_name": form.first_name.data,
-                "last_name": form.last_name.data,
-                "email": form.email.data,
-                "phone": form.phone.data,
-                "position": form.position.data,
-                "hire_date": form.hire_date.data.isoformat(),
-                "salary": form.salary.data,
-                "status": form.status.data,
-                "department_id": form.department_id.data,
-            },
-            timeout=3
-        )
+        try:
+            patch_response = requests.patch(
+                f"{EMPLOYEE_SERVICE_URL}/employees/{employee_id}",
+                headers={
+                    "Authorization": f"Bearer {token}"
+                },
+                json={
+                    "first_name": form.first_name.data,
+                    "last_name": form.last_name.data,
+                    "email": form.email.data,
+                    "phone": form.phone.data,
+                    "position": form.position.data,
+                    "hire_date": form.hire_date.data.isoformat(),
+                    "salary": form.salary.data,
+                    "status": form.status.data,
+                    "department_id": form.department_id.data,
+                },
+                timeout=3
+            )
+
+        except requests.exceptions.RequestException:
+            return service_request_failed()
 
         if handle_unauthorized(patch_response):
             return redirect(url_for("login"))
@@ -444,13 +484,17 @@ def delete_employee(employee_id):
     if not token:
         return redirect(url_for("login"))
 
-    response= requests.delete(
-        f"{EMPLOYEE_SERVICE_URL}/employee/{employee_id}",
-        headers={
-            "Authorization": f"Bearer {token}"
-        },
-        timeout=3
-    )
+    try:
+        response= requests.delete(
+            f"{EMPLOYEE_SERVICE_URL}/employee/{employee_id}",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+            timeout=3
+        )
+
+    except requests.exceptions.RequestException:
+        return service_request_failed()
 
     if handle_unauthorized(response):
         return redirect(url_for("login"))
@@ -483,8 +527,8 @@ def dashboard():
             },
             timeout=3
         )
-    except requests.exceptions.RequestException as error:
-        return service_request_failed(error)
+    except requests.exceptions.RequestException:
+        return service_request_failed()
 
     if handle_unauthorized(response):
         return redirect(url_for("login"))
@@ -508,10 +552,15 @@ def departments():
     if not token:
         return redirect(url_for("login"))
 
-    response = requests.get(
-        f"{DEPARTMENT_SERVICE_URL}/departments",
-        timeout=3
-    )
+    try:
+
+        response = requests.get(
+            f"{DEPARTMENT_SERVICE_URL}/departments",
+            timeout=3
+        )
+
+    except requests.exceptions.RequestException:
+        return service_request_failed()
 
     if response.status_code != 200:
         return redirect(url_for('login'))
@@ -530,13 +579,18 @@ def add_department():
     form = AddDepartment()
     if form.validate_on_submit():
         name = form.name.data
-        response = requests.post(
-            f"{DEPARTMENT_SERVICE_URL}/departments",
-            json={
-                "name": name
-            },
-            timeout=3
-        )
+
+        try:
+            response = requests.post(
+                f"{DEPARTMENT_SERVICE_URL}/departments",
+                json={
+                    "name": name
+                },
+                timeout=3
+            )
+
+        except requests.exceptions.RequestException:
+            return service_request_failed()
 
         if response.status_code == 201:
             return redirect(url_for("departments"))
@@ -561,10 +615,14 @@ def edit_department(department_id):
         return redirect(url_for("login"))
 
     form = AddDepartment()
-    response = requests.get(
-        f"{DEPARTMENT_SERVICE_URL}/departments/{department_id}",
-        timeout=3
-    )
+    try:
+        response = requests.get(
+            f"{DEPARTMENT_SERVICE_URL}/departments/{department_id}",
+            timeout=3
+        )
+
+    except requests.exceptions.RequestException:
+        return service_request_failed()
 
     if response.status_code != 200:
         error = response.json().get(
@@ -581,14 +639,19 @@ def edit_department(department_id):
     department = response.json()
 
     if form.validate_on_submit():
-        edit_response = requests.patch(
-            f"{DEPARTMENT_SERVICE_URL}/departments/{department_id}",
-            json={
-                'name': form.name.data
-            },
-            timeout=3
 
-        )
+        try:
+            edit_response = requests.patch(
+                f"{DEPARTMENT_SERVICE_URL}/departments/{department_id}",
+                json={
+                    'name': form.name.data
+                },
+                timeout=3
+
+            )
+
+        except requests.exceptions.RequestException:
+            return service_request_failed()
 
         if edit_response.status_code == 200:
             return redirect(url_for("departments"))
@@ -610,10 +673,15 @@ def delete_department(department_id):
     if not token:
         return redirect(url_for("login"))
 
-    response = requests.delete(
-        f"{DEPARTMENT_SERVICE_URL}/departments/{department_id}",
-        timeout=3
-    )
+    try:
+
+        response = requests.delete(
+            f"{DEPARTMENT_SERVICE_URL}/departments/{department_id}",
+            timeout=3
+        )
+
+    except requests.exceptions.RequestException:
+        return service_request_failed()
 
     if response.status_code != 200:
         error = response.json().get('error')
@@ -629,13 +697,17 @@ def attendance():
     if not token:
         return redirect(url_for("login"))
 
-    response = requests.get(
-        f"{ATTENDANCE_SERVICE_URL}/attendance",
-        headers={
-            "Authorization": f"Bearer {token}"
-        },
-        timeout=3
-    )
+    try:
+        response = requests.get(
+            f"{ATTENDANCE_SERVICE_URL}/attendance",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+            timeout=3
+        )
+
+    except requests.exceptions.RequestException:
+        return service_request_failed()
 
     if handle_unauthorized(response):
         return redirect(url_for("login"))
@@ -678,13 +750,18 @@ def check_in(employee_id):
     if not token:
         return redirect(url_for("login"))
 
-    response = requests.post(
-        f"{ATTENDANCE_SERVICE_URL}/attendance/{employee_id}",
-        headers={
-            "Authorization": f"Bearer {token}"
-        },
-        timeout=3
-    )
+    try:
+
+        response = requests.post(
+            f"{ATTENDANCE_SERVICE_URL}/attendance/{employee_id}",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+            timeout=3
+        )
+
+    except requests.exceptions.RequestException:
+        return service_request_failed()
 
     if handle_unauthorized(response):
         return redirect(url_for("login"))
@@ -704,13 +781,16 @@ def check_in(employee_id):
             error=error
         )
 
-    attendance_response = requests.get(
-        f"{ATTENDANCE_SERVICE_URL}/attendance",
-        headers={
-            "Authorization": f"Bearer {token}"
-        },
-        timeout=3
-    )
+    try:
+        attendance_response = requests.get(
+            f"{ATTENDANCE_SERVICE_URL}/attendance",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+            timeout=3
+        )
+    except requests.exceptions.RequestException:
+        return service_request_failed()
 
     if handle_unauthorized(attendance_response):
         return redirect(url_for("login"))
@@ -731,13 +811,17 @@ def check_out(employee_id):
     if not token:
         return redirect(url_for("login"))
 
-    response = requests.patch(
-        f"{ATTENDANCE_SERVICE_URL}/attendance/{employee_id}",
-        headers={
-            "Authorization": f"Bearer {token}"
-        },
-        timeout=3
-    )
+    try:
+        response = requests.patch(
+            f"{ATTENDANCE_SERVICE_URL}/attendance/{employee_id}",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+            timeout=3
+        )
+
+    except requests.exceptions.RequestException:
+        return service_request_failed()
 
     if handle_unauthorized(response):
         return redirect(url_for("login"))
@@ -757,13 +841,17 @@ def check_out(employee_id):
             error=error
         )
 
-    attendance_response = requests.get(
-        f"{ATTENDANCE_SERVICE_URL}/attendance",
-        headers={
-            "Authorization": f"Bearer {token}"
-        },
-        timeout=3
-    )
+    try:
+        attendance_response = requests.get(
+            f"{ATTENDANCE_SERVICE_URL}/attendance",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+            timeout=3
+        )
+
+    except requests.exceptions.RequestException:
+        return service_request_failed()
 
     if handle_unauthorized(attendance_response):
         return redirect(url_for("login"))
@@ -789,13 +877,18 @@ def my_attendance():
     if not token:
         return redirect(url_for("login"))
 
-    response = requests.get(
-        f"{ATTENDANCE_SERVICE_URL}/employee/{employee_id}/attendance",
-        headers={
-            "Authorization": f"Bearer {token}"
-        },
-        timeout=3
-    )
+    try:
+
+        response = requests.get(
+            f"{ATTENDANCE_SERVICE_URL}/employee/{employee_id}/attendance",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+            timeout=3
+        )
+
+    except requests.exceptions.RequestException:
+        return service_request_failed()
 
     if handle_unauthorized(response):
         return redirect(url_for("login"))
