@@ -1,0 +1,35 @@
+services:
+
+  department_service:
+    build: ./department_service
+    ports:
+      - "5001:5001"
+
+  employee_service:
+    build: ./employee_service
+    ports:
+      - "5002:5002"
+    env_file:
+      - ./employee_service/.env
+
+  attendance_service:
+    build: ./attendance_service
+    ports: 
+      - "5003:5003"
+    env_file:
+      - ./attendance_service/.env
+
+    
+  auth_service:
+    build: ./auth_service
+    ports: 
+      - "5004:5004"
+    env_file:
+      - ./auth_service/.env
+
+  web_service:
+    build: ./web_service
+    ports:
+      - "8000:5000"
+    env_file:
+      - ./web_service/.env
