@@ -61,6 +61,14 @@
                         Attendance
                     </a>
 
+                    {% if session.get("role") == "admin" %}
+
+                        <a href="{{ url_for('registration_requests') }}">
+                            Registration Requests
+                        </a>
+
+                    {% endif %}
+
                 {% else %}
 
                     <a
@@ -98,3 +106,4 @@
 </body>
 
 </html>
+

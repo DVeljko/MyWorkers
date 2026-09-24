@@ -1,0 +1,298 @@
+
+{% extends "base.html" %}
+
+{% block title %}MyWorkers{% endblock %}
+
+{% block content %}
+
+<div class="auth-page">
+
+    <div class="auth-wrapper">
+
+        <div class="auth-brand">
+            <h1>MyWorkers</h1>
+            <p>Manage your team in one place.</p>
+        </div>
+
+        <div class="auth-card">
+
+            <!-- TABS -->
+            <div class="auth-tabs">
+
+                <button
+                    type="button"
+                    class="auth-tab {% if not active_tab or active_tab == 'login' %}active{% endif %}"
+                    onclick="showAuthForm('login', this)"
+                >
+                    Login
+                </button>
+
+                <button
+                    type="button"
+                    class="auth-tab {% if active_tab == 'employee' %}active{% endif %}"
+                    onclick="showAuthForm('employee', this)"
+                >
+                    Join Company
+                </button>
+
+                <button
+                    type="button"
+                    class="auth-tab {% if active_tab == 'company' %}active{% endif %}"
+                    onclick="showAuthForm('company', this)"
+                >
+                    Create Company
+                </button>
+
+            </div>
+
+
+            <!-- ==================== LOGIN ==================== -->
+
+            <div
+                id="login"
+                class="auth-content {% if not active_tab or active_tab == 'login' %}active{% endif %}"
+            >
+
+                <div class="auth-header">
+                    <h2>Welcome back</h2>
+                    <p>Sign in to your MyWorkers account.</p>
+                </div>
+
+                {% if login_error %}
+                    <div class="error">
+                        {{ login_error }}
+                    </div>
+                {% endif %}
+
+                <form
+                    action="{{ url_for('login') }}"
+                    method="POST"
+                    class="auth-form"
+                >
+
+                    {{ login_form.hidden_tag() }}
+
+                    <div class="form-group">
+                        {{ login_form.email.label }}
+                        {{ login_form.email(
+                            placeholder="you@example.com"
+                        ) }}
+                    </div>
+
+                    <div class="form-group">
+                        {{ login_form.password.label }}
+                        {{ login_form.password(
+                            placeholder="Enter your password"
+                        ) }}
+                    </div>
+
+                    {{ login_form.submit(class="auth-button") }}
+
+                </form>
+
+            </div>
+
+
+            <!-- ==================== JOIN COMPANY ==================== -->
+
+            <div
+                id="employee"
+                class="auth-content {% if active_tab == 'employee' %}active{% endif %}"
+            >
+
+                <div class="auth-header">
+                    <h2>Join your company</h2>
+                    <p>
+                        Send a registration request to your company administrator.
+                    </p>
+                </div>
+
+                {% if employee_error %}
+                    <div class="error">
+                        {{ employee_error }}
+                    </div>
+                {% endif %}
+
+                {% if employee_success %}
+                    <div class="success">
+                        {{ employee_success }}
+                    </div>
+                {% endif %}
+
+                <form
+                    action="{{ url_for('register_employee') }}"
+                    method="POST"
+                    class="auth-form"
+                >
+
+                    {{ employee_form.hidden_tag() }}
+
+                    <div class="form-row">
+
+                        <div class="form-group">
+                            {{ employee_form.first_name.label }}
+                            {{ employee_form.first_name(
+                                placeholder="First name"
+                            ) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ employee_form.last_name.label }}
+                            {{ employee_form.last_name(
+                                placeholder="Last name"
+                            ) }}
+                        </div>
+
+                    </div>
+
+                    <div class="form-group">
+                        {{ employee_form.company_id.label }}
+                        {{ employee_form.company_id(
+                            placeholder="Company ID"
+                        ) }}
+                    </div>
+
+                    <div class="form-group">
+                        {{ employee_form.email.label }}
+                        {{ employee_form.email(
+                            placeholder="you@example.com"
+                        ) }}
+                    </div>
+
+                    <div class="form-row">
+
+                        <div class="form-group">
+                            {{ employee_form.password.label }}
+                            {{ employee_form.password(
+                                placeholder="Password"
+                            ) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ employee_form.confirm_password.label }}
+                            {{ employee_form.confirm_password(
+                                placeholder="Confirm password"
+                            ) }}
+                        </div>
+
+                    </div>
+
+                    {{ employee_form.submit(class="auth-button") }}
+
+                </form>
+
+            </div>
+
+
+            <!-- ==================== CREATE COMPANY ==================== -->
+
+            <div
+                id="company"
+                class="auth-content {% if active_tab == 'company' %}active{% endif %}"
+            >
+
+                <div class="auth-header">
+                    <h2>Create your company</h2>
+                    <p>
+                        Create a workspace and your administrator account.
+                    </p>
+                </div>
+
+                {% if register_error %}
+                    <div class="error">
+                        {{ register_error }}
+                    </div>
+                {% endif %}
+
+                <form
+                    action="{{ url_for('create_company') }}"
+                    method="POST"
+                    class="auth-form"
+                >
+
+                    {{ register_form.hidden_tag() }}
+
+                    <div class="form-row">
+
+                        <div class="form-group">
+                            {{ register_form.owner_first_name.label }}
+                            {{ register_form.owner_first_name(
+                                placeholder="First name"
+                            ) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ register_form.owner_last_name.label }}
+                            {{ register_form.owner_last_name(
+                                placeholder="Last name"
+                            ) }}
+                        </div>
+
+                    </div>
+
+                    <div class="form-group">
+                        {{ register_form.company_name.label }}
+                        {{ register_form.company_name(
+                            placeholder="Company name"
+                        ) }}
+                    </div>
+
+                    <div class="form-group">
+                        {{ register_form.email.label }}
+                        {{ register_form.email(
+                            placeholder="you@company.com"
+                        ) }}
+                    </div>
+
+                    <div class="form-row">
+
+                        <div class="form-group">
+                            {{ register_form.password.label }}
+                            {{ register_form.password(
+                                placeholder="Password"
+                            ) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ register_form.confirm_password.label }}
+                            {{ register_form.confirm_password(
+                                placeholder="Confirm password"
+                            ) }}
+                        </div>
+
+                    </div>
+
+                    {{ register_form.submit(class="auth-button") }}
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+    function showAuthForm(formId, button) {
+
+        const forms = document.querySelectorAll(".auth-content");
+        const tabs = document.querySelectorAll(".auth-tab");
+
+        forms.forEach(form => {
+            form.classList.remove("active");
+        });
+
+        tabs.forEach(tab => {
+            tab.classList.remove("active");
+        });
+
+        document.getElementById(formId).classList.add("active");
+        button.classList.add("active");
+    }
+</script>
+
+{% endblock %}
+

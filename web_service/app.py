@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, session, redirect, url_for
-from forms import LoginForm, AddEmployee, AddDepartment
+from forms import LoginForm, AddEmployee, AddDepartment, RegisterForm, EmployeeRegisterForm, AcceptEmployeeForm
 import os 
 from dotenv import load_dotenv
 import requests
@@ -24,7 +24,7 @@ def handle_unauthorized(response):
 
     return False
 
-def service_request_failed(error):
+def service_request_failed():
     return render_template(
         "service_error.html",
         error="Service is currently unavailable."
@@ -36,7 +36,7 @@ def roles_required(*allowed_roles):
         def check_role(*args, **kwargs):
 
             if not session.get("access_token"):
-                return redirect(url_for("login"))
+                return redirect(url_for("index"))
 
             if session.get("role") not in allowed_roles:
 
@@ -59,18 +59,24 @@ def roles_required(*allowed_roles):
 @app.route("/")
 def index():
 
-    token = session.get('access_token')
+    token = session.get("access_token")
     employee_role = session.get("role")
     employee_id = session.get("employee_id")
 
     if not token:
-        return redirect(url_for("login"))
+        return render_template("auth.html", 
+            login_form=LoginForm(),
+            employee_form=EmployeeRegisterForm(),
+            register_form=RegisterForm()
+        )
 
     if employee_role == "employee":
-        return redirect(url_for("employee_profile", employee_id=employee_id))
+        return redirect(
+            url_for("employee_profile", employee_id=employee_id)
+        )
 
     return redirect(url_for("dashboard"))
-    
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -120,22 +126,172 @@ def login():
             error = response.json().get("error")
 
             return render_template(
-                "login.html",
-                form=form,
-                error=error
+                "auth.html",
+                login_form=form,
+                employee_form=EmployeeRegisterForm(),
+                register_form=RegisterForm(),
+                login_error=error
             )
 
     return render_template(
-        "login.html",
-        form=form
+        "auth.html",
+        login_form=form,
+        employee_form=EmployeeRegisterForm(),
+        register_form=RegisterForm(),
+        active_tab="login"
     )
+
+@app.route("/create-company", methods=['GET', 'POST'])
+def create_company():
+
+    form = RegisterForm()
+
+    if form.validate_on_submit():
+        owner_first_name = form.owner_first_name.data
+        owner_last_name = form.owner_last_name.data
+        company_name = form.company_name.data
+        email = form.email.data
+        password = form.password.data
+        confirm_password = form.confirm_password.data
+
+        try:
+            response = requests.post(
+                f"{AUTH_SERVICE}/register",
+                json={
+                    "owner_first_name": owner_first_name,
+                    "owner_last_name": owner_last_name,
+                    "company_name": company_name,
+                    "email": email,
+                    "password": password,
+                    "confirm_password": confirm_password,
+                },
+                timeout=3,
+            )
+        except requests.exceptions.RequestException:
+            return service_request_failed()
+
+        if response.status_code != 201:
+            error = response.json().get("error", "Something went wrong.")
+
+            return render_template(
+                "auth.html",
+                login_form=LoginForm(),
+                employee_form=EmployeeRegisterForm(),
+                register_form=form,
+                register_error=error,
+                active_tab="company"
+            )
+
+        try:
+            login_response = requests.post(
+                f"{AUTH_SERVICE}/login",
+                json={
+                    "email": email,
+                    "password": password
+                },
+                timeout=3
+            )
+
+        except requests.exceptions.RequestException:
+            return service_request_failed()
+
+        if login_response.status_code != 200:
+            error = login_response.json().get("error", "Login failed.")
+
+            return render_template(
+                "auth.html",
+                login_form=LoginForm(),
+                employee_form=EmployeeRegisterForm(),
+                register_form=form,
+                register_error=error,
+                active_tab="company"
+            )
+
+        data = login_response.json()
+
+        session["access_token"] = data["access_token"]
+        session["role"] = data["role"]
+        session["employee_id"] = data["employee_id"]
+
+        return redirect(url_for("dashboard"))
+
+    return render_template(
+        "auth.html",
+        login_form=LoginForm(),
+        employee_form=EmployeeRegisterForm(),
+        register_form=form,
+        active_tab="company"
+    )
+
+@app.route("/register-employee", methods=["POST"])
+def register_employee():
+
+    form = EmployeeRegisterForm()
+
+    if form.validate_on_submit():
+
+        first_name = form.first_name.data
+        last_name = form.last_name.data
+        company_id = form.company_id.data
+        email = form.email.data
+        password = form.password.data
+        confirm_password = form.confirm_password.data
+
+        try:
+            response = requests.post(
+                f"{AUTH_SERVICE}/register-employee",
+                json={
+                    "company_id": company_id,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "email": email,
+                    "password": password,
+                    "confirm_password": confirm_password,
+                },
+                timeout=3
+            )
+
+        except requests.exceptions.RequestException:
+            return service_request_failed()
+
+        # Ako registracija nije uspjela
+        if response.status_code != 201:
+
+            error = response.json().get(
+                "error",
+                "Could not send registration request."
+            )
+
+            return render_template(
+                "auth.html",
+                login_form=LoginForm(),
+                employee_form=form,
+                register_form=RegisterForm(),
+                employee_error=error,
+                active_tab="employee"
+            )
+
+        # Ako je zahtjev uspješno poslan
+        return render_template(
+            "registration_request_success.html"
+        )
+
+    # Ako WTForms validacija nije prošla
+    return render_template(
+        "auth.html",
+        login_form=LoginForm(),
+        employee_form=form,
+        register_form=RegisterForm(),
+        active_tab="employee"
+    )
+
 
 @app.route("/employees")
 @roles_required("admin", "manager")
 def all_employees():
     token = session.get('access_token')
     if not token:
-        return redirect(url_for('login'))
+        return redirect(url_for('index'))
 
     search = request.args.get("search")
     if search:
@@ -159,7 +315,7 @@ def all_employees():
             return service_request_failed()
 
         if handle_unauthorized(response):
-            return redirect(url_for("login"))
+            return redirect(url_for("index"))
 
         if response.status_code != 200:
             error = response.json().get("error", "Something went wrong.")
@@ -186,7 +342,7 @@ def all_employees():
         return service_request_failed()
 
     if handle_unauthorized(response):
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
 
     if response.status_code == 200:
@@ -207,7 +363,7 @@ def add_employee():
     token = session.get("access_token")
 
     if not token:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     form = AddEmployee()
 
@@ -215,6 +371,9 @@ def add_employee():
     try:
         department_response = requests.get(
             f"{DEPARTMENT_SERVICE_URL}/departments",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
             timeout=3
         )
     except requests.exceptions.RequestException:
@@ -256,7 +415,7 @@ def add_employee():
             return service_request_failed()
 
         if handle_unauthorized(response):
-            return redirect(url_for("login"))
+            return redirect(url_for("index"))
 
         
 
@@ -286,7 +445,7 @@ def employee_profile(employee_id):
     token = session.get("access_token")
 
     if not token:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     try:
 
@@ -303,7 +462,7 @@ def employee_profile(employee_id):
 
 
     if handle_unauthorized(response):
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     
     if response.status_code == 200:
@@ -314,6 +473,9 @@ def employee_profile(employee_id):
 
             department_response = requests.get(
                 f"{DEPARTMENT_SERVICE_URL}/departments/{department_id}",
+                headers={
+                    "Authorization": f"Bearer {token}"
+                },
                 timeout=3
             )
 
@@ -352,13 +514,16 @@ def edit_employee(employee_id):
     token = session.get("access_token")
 
     if not token:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     form = AddEmployee()
 
     try:
         department_response = requests.get(
             f"{DEPARTMENT_SERVICE_URL}/departments",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
             timeout=3
         )
 
@@ -385,7 +550,7 @@ def edit_employee(employee_id):
         return service_request_failed()
 
     if handle_unauthorized(response):
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
     
 
     if response.status_code != 200:
@@ -429,7 +594,7 @@ def edit_employee(employee_id):
             return service_request_failed()
 
         if handle_unauthorized(patch_response):
-            return redirect(url_for("login"))
+            return redirect(url_for("index"))
 
         if patch_response.status_code == 200:
             return redirect(
@@ -482,7 +647,7 @@ def delete_employee(employee_id):
     token = session.get('access_token')
 
     if not token:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     try:
         response= requests.delete(
@@ -497,7 +662,7 @@ def delete_employee(employee_id):
         return service_request_failed()
 
     if handle_unauthorized(response):
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     if response.status_code == 200:
         return redirect(url_for("all_employees"))
@@ -514,10 +679,11 @@ def delete_employee(employee_id):
 @app.route("/dashboard")
 @roles_required("admin", "manager")
 def dashboard():
-    token = session.get('access_token')
+
+    token = session.get("access_token")
 
     if not token:
-        return redirect(url_for('login'))
+        return redirect(url_for("index"))
 
     try:
         response = requests.get(
@@ -527,14 +693,29 @@ def dashboard():
             },
             timeout=3
         )
+
     except requests.exceptions.RequestException:
         return service_request_failed()
 
     if handle_unauthorized(response):
-        return redirect(url_for("login"))
-    
+        return redirect(url_for("index"))
+
+    if response.status_code != 200:
+        error = response.json().get(
+            "error",
+            "Could not load dashboard."
+        )
+
+        return render_template(
+            "dashboard.html",
+            total_employees=0,
+            active_employees=0,
+            inactive_employees=0,
+            total_departments=0,
+            error=error
+        )
+
     data = response.json()
-    print(data)
 
     return render_template(
         "dashboard.html",
@@ -547,42 +728,69 @@ def dashboard():
 @app.route("/departments")
 @roles_required("admin", "manager")
 def departments():
+
     token = session.get("access_token")
 
     if not token:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     try:
-
         response = requests.get(
             f"{DEPARTMENT_SERVICE_URL}/departments",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
             timeout=3
         )
 
     except requests.exceptions.RequestException:
         return service_request_failed()
 
+    if handle_unauthorized(response):
+        return redirect(url_for("index"))
+
     if response.status_code != 200:
-        return redirect(url_for('login'))
+
+        print(
+            "DEPARTMENT ERROR:",
+            response.status_code,
+            response.text
+        )
+
+        return render_template(
+            "departments.html",
+            departments=[],
+            error=response.text
+        )
 
     departments = response.json()
-    return render_template("departments.html", departments=departments)
 
-@app.route("/department/add", methods=['GET','POST'])
+    return render_template(
+        "departments.html",
+        departments=departments
+    )
+
+@app.route("/department/add", methods=["GET", "POST"])
 @roles_required("admin")
 def add_department():
-    token = session.get('access_token')
+
+    token = session.get("access_token")
 
     if not token:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     form = AddDepartment()
+
     if form.validate_on_submit():
+
         name = form.name.data
 
         try:
             response = requests.post(
                 f"{DEPARTMENT_SERVICE_URL}/departments",
+                headers={
+                    "Authorization": f"Bearer {token}"
+                },
                 json={
                     "name": name
                 },
@@ -592,19 +800,40 @@ def add_department():
         except requests.exceptions.RequestException:
             return service_request_failed()
 
+        if handle_unauthorized(response):
+            return redirect(url_for("index"))
+
         if response.status_code == 201:
             return redirect(url_for("departments"))
 
-        else:
-            error = response.json().get('error')
-            return render_template(
-                "add_department.html",
-                form=form,
-                error=error
+        # Privremeno nam pokazuje stvarnu grešku
+        print(
+            "ADD DEPARTMENT ERROR:",
+            response.status_code,
+            response.text
+        )
+
+        try:
+            error = response.json().get(
+                "error",
+                "Could not add department."
+            )
+        except requests.exceptions.JSONDecodeError:
+            error = (
+                f"Department service error "
+                f"({response.status_code}). Check terminal logs."
             )
 
+        return render_template(
+            "add_department.html",
+            form=form,
+            error=error
+        )
 
-    return render_template("add_department.html", form=form)
+    return render_template(
+        "add_department.html",
+        form=form
+    )
 
 @app.route("/department/<int:department_id>/edit", methods=['GET', 'POST'])
 @roles_required("admin")
@@ -612,12 +841,15 @@ def edit_department(department_id):
 
     token = session.get('access_token')
     if not token:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     form = AddDepartment()
     try:
         response = requests.get(
             f"{DEPARTMENT_SERVICE_URL}/departments/{department_id}",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
             timeout=3
         )
 
@@ -643,6 +875,9 @@ def edit_department(department_id):
         try:
             edit_response = requests.patch(
                 f"{DEPARTMENT_SERVICE_URL}/departments/{department_id}",
+                headers={
+                    "Authorization": f"Bearer {token}"
+                },
                 json={
                     'name': form.name.data
                 },
@@ -671,12 +906,15 @@ def delete_department(department_id):
 
     token = session.get('access_token')
     if not token:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     try:
 
         response = requests.delete(
             f"{DEPARTMENT_SERVICE_URL}/departments/{department_id}",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
             timeout=3
         )
 
@@ -695,7 +933,7 @@ def attendance():
     token = session.get("access_token")
 
     if not token:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     try:
         response = requests.get(
@@ -710,7 +948,7 @@ def attendance():
         return service_request_failed()
 
     if handle_unauthorized(response):
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     if response.status_code == 200:
         data = response.json()
@@ -748,7 +986,7 @@ def check_in(employee_id):
     token = session.get("access_token")
 
     if not token:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     try:
 
@@ -764,7 +1002,7 @@ def check_in(employee_id):
         return service_request_failed()
 
     if handle_unauthorized(response):
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     if response.status_code == 201:
         if session.get("role") == "employee":
@@ -793,7 +1031,7 @@ def check_in(employee_id):
         return service_request_failed()
 
     if handle_unauthorized(attendance_response):
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     attendances = attendance_response.json()
 
@@ -809,7 +1047,7 @@ def check_out(employee_id):
     token = session.get("access_token")
 
     if not token:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     try:
         response = requests.patch(
@@ -824,7 +1062,7 @@ def check_out(employee_id):
         return service_request_failed()
 
     if handle_unauthorized(response):
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     if response.status_code == 200:
         if session.get("role") == "employee":
@@ -854,7 +1092,7 @@ def check_out(employee_id):
         return service_request_failed()
 
     if handle_unauthorized(attendance_response):
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     attendances = attendance_response.json()
 
@@ -864,10 +1102,201 @@ def check_out(employee_id):
         error=error
     )
 
+@app.route("/registration-requests")
+@roles_required("admin")
+def registration_requests():
+
+    token = session.get("access_token")
+
+    if not token:
+        return redirect(url_for("index"))
+
+    try:
+        response = requests.get(
+            f"{AUTH_SERVICE}/registration-requests",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+            timeout=3
+        )
+
+    except requests.exceptions.RequestException:
+        return service_request_failed()
+
+    if handle_unauthorized(response):
+        return redirect(url_for("index"))
+
+    if response.status_code != 200:
+        error = response.json().get(
+            "error",
+            "Could not load registration requests."
+        )
+
+        return render_template(
+            "registration_requests.html",
+            registration_requests=[],
+            error=error
+        )
+
+    registration_requests = response.json()
+
+    return render_template(
+        "registration_requests.html",
+        registration_requests=registration_requests
+    )
+
+
+@app.route("/registration-requests/<int:request_id>/accept",methods=["GET", "POST"])
+@roles_required("admin")
+def accept_registration_request(request_id):
+
+    token = session.get("access_token")
+
+    if not token:
+        return redirect(url_for("index"))
+
+    form = form = AcceptEmployeeForm()
+
+    # Učitaj departments samo iz adminove kompanije
+    try:
+        department_response = requests.get(
+            f"{DEPARTMENT_SERVICE_URL}/departments",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+            timeout=3
+        )
+
+    except requests.exceptions.RequestException:
+        return service_request_failed()
+
+    if handle_unauthorized(department_response):
+        return redirect(url_for("index"))
+
+    if department_response.status_code != 200:
+        return render_template(
+            "accept_registration_request.html",
+            form=form,
+            error="Could not load departments."
+        )
+
+    departments = department_response.json()
+
+    form.department_id.choices = [
+        (department["id"], department["name"])
+        for department in departments
+    ]
+
+    if form.validate_on_submit():
+
+        try:
+            response = requests.post(
+                f"{AUTH_SERVICE}/registration-requests/{request_id}/accept",
+                headers={
+                    "Authorization": f"Bearer {token}"
+                },
+                json={
+                    "phone": form.phone.data,
+                    "position": form.position.data,
+                    "hire_date": form.hire_date.data.isoformat(),
+                    "salary": form.salary.data,
+                    "department_id": form.department_id.data
+                },
+                timeout=3
+            )
+
+        except requests.exceptions.RequestException:
+            return service_request_failed()
+
+        if handle_unauthorized(response):
+            return redirect(url_for("index"))
+
+        if response.status_code == 200:
+            return redirect(
+                url_for("registration_requests")
+            )
+
+        error = response.json().get(
+            "error",
+            "Could not accept registration request."
+        )
+
+        return render_template(
+            "accept_registration_request.html",
+            form=form,
+            error=error
+        )
+
+    return render_template(
+        "accept_registration_request.html",
+        form=form
+    )
+
+@app.route(
+    "/registration-requests/<int:request_id>/reject",
+    methods=["POST"]
+)
+@roles_required("admin")
+def reject_registration_request(request_id):
+
+    token = session.get("access_token")
+
+    if not token:
+        return redirect(url_for("index"))
+
+    try:
+        response = requests.post(
+            f"{AUTH_SERVICE}/registration-requests/{request_id}/reject",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+            timeout=3
+        )
+
+    except requests.exceptions.RequestException:
+        return service_request_failed()
+
+    if handle_unauthorized(response):
+        return redirect(url_for("index"))
+
+    if response.status_code == 200:
+        return redirect(
+            url_for("registration_requests")
+        )
+
+    error = response.json().get(
+        "error",
+        "Could not reject registration request."
+    )
+
+    # Ponovo učitamo pending requests da stranica ostane normalna
+    try:
+        requests_response = requests.get(
+            f"{AUTH_SERVICE}/registration-requests",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+            timeout=3
+        )
+
+    except requests.exceptions.RequestException:
+        return service_request_failed()
+
+    registration_requests = []
+
+    if requests_response.status_code == 200:
+        registration_requests = requests_response.json()
+
+    return render_template(
+        "registration_requests.html",
+        registration_requests=registration_requests,
+        error=error
+    )
+
 @app.route("/logout", methods=["GET","POST"])
 def logout():
     session.clear()
-    return redirect(url_for('login'))
+    return redirect(url_for('index'))
 
 @app.route("/my-attendance")
 def my_attendance():
@@ -875,10 +1304,9 @@ def my_attendance():
     employee_id = session.get("employee_id")
 
     if not token:
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
     try:
-
         response = requests.get(
             f"{ATTENDANCE_SERVICE_URL}/employee/{employee_id}/attendance",
             headers={
@@ -891,9 +1319,8 @@ def my_attendance():
         return service_request_failed()
 
     if handle_unauthorized(response):
-        return redirect(url_for("login"))
+        return redirect(url_for("index"))
 
-    
     if response.status_code != 200:
         error = response.json().get("error")
 
@@ -909,7 +1336,6 @@ def my_attendance():
         "my_attendance.html",
         attendances=attendances
     )
-
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)

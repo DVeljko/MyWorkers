@@ -1,0 +1,403 @@
+{% extends "base.html" %}
+
+{% block title %}
+Accept Employee | MyWorkers
+{% endblock %}
+
+{% block content %}
+
+<style>
+
+    #accept-employee-page {
+        width: 100%;
+        min-height: calc(100vh - 60px);
+
+        display: flex !important;
+        justify-content: center !important;
+        align-items: flex-start !important;
+
+        padding: 60px 20px !important;
+        box-sizing: border-box !important;
+    }
+
+
+    #accept-employee-page .accept-box {
+        width: 100% !important;
+        max-width: 560px !important;
+
+        background: #ffffff !important;
+
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 16px !important;
+
+        padding: 36px !important;
+
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07) !important;
+
+        box-sizing: border-box !important;
+    }
+
+
+    #accept-employee-page .accept-title {
+        margin: 0 0 8px 0 !important;
+
+        font-size: 28px !important;
+        font-weight: 700 !important;
+
+        color: #172033 !important;
+    }
+
+
+    #accept-employee-page .accept-description {
+        margin: 0 0 32px 0 !important;
+
+        color: #64748b !important;
+
+        font-size: 14px !important;
+        line-height: 1.5 !important;
+    }
+
+
+    #accept-employee-page form {
+        width: 100% !important;
+        max-width: none !important;
+
+        margin: 0 !important;
+        padding: 0 !important;
+
+        background: transparent !important;
+
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+
+    #accept-employee-page .accept-field {
+        width: 100% !important;
+
+        margin: 0 0 20px 0 !important;
+        padding: 0 !important;
+    }
+
+
+    #accept-employee-page .accept-field label {
+        display: block !important;
+
+        margin: 0 0 8px 0 !important;
+
+        font-size: 14px !important;
+        font-weight: 600 !important;
+
+        color: #334155 !important;
+    }
+
+
+    #accept-employee-page .accept-field input,
+    #accept-employee-page .accept-field select {
+        display: block !important;
+
+        width: 100% !important;
+        height: 48px !important;
+
+        box-sizing: border-box !important;
+
+        margin: 0 !important;
+        padding: 0 14px !important;
+
+        background: #f8fafc !important;
+
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 9px !important;
+
+        color: #0f172a !important;
+
+        font-size: 14px !important;
+        font-family: inherit !important;
+
+        outline: none !important;
+    }
+
+
+    #accept-employee-page .accept-field select {
+        cursor: pointer !important;
+
+        appearance: auto !important;
+        -webkit-appearance: auto !important;
+    }
+
+
+    #accept-employee-page .accept-field input:focus,
+    #accept-employee-page .accept-field select:focus {
+        background: #ffffff !important;
+
+        border-color: #2563eb !important;
+
+        box-shadow:
+            0 0 0 3px rgba(37, 99, 235, 0.10) !important;
+    }
+
+
+    #accept-employee-page .accept-actions {
+        display: flex !important;
+        align-items: center !important;
+
+        gap: 12px !important;
+
+        margin-top: 30px !important;
+    }
+
+
+    #accept-employee-page .accept-submit {
+        height: 46px !important;
+
+        padding: 0 22px !important;
+
+        border: none !important;
+        border-radius: 8px !important;
+
+        background: #2563eb !important;
+
+        color: #ffffff !important;
+
+        font-size: 14px !important;
+        font-weight: 600 !important;
+
+        cursor: pointer !important;
+    }
+
+
+    #accept-employee-page .accept-submit:hover {
+        background: #1d4ed8 !important;
+    }
+
+
+    #accept-employee-page .accept-cancel {
+        height: 46px !important;
+
+        padding: 0 22px !important;
+
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+
+        box-sizing: border-box !important;
+
+        background: #ffffff !important;
+
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+
+        color: #475569 !important;
+
+        text-decoration: none !important;
+
+        font-size: 14px !important;
+        font-weight: 600 !important;
+    }
+
+
+    #accept-employee-page .accept-cancel:hover {
+        background: #f8fafc !important;
+    }
+
+
+    #accept-employee-page .accept-error {
+        margin: 0 0 22px 0 !important;
+
+        padding: 12px 14px !important;
+
+        background: #fef2f2 !important;
+
+        border: 1px solid #fecaca !important;
+        border-radius: 8px !important;
+
+        color: #dc2626 !important;
+
+        font-size: 13px !important;
+    }
+
+
+    #accept-employee-page .field-error {
+        display: block !important;
+
+        margin-top: 6px !important;
+
+        color: #dc2626 !important;
+
+        font-size: 12px !important;
+    }
+
+
+    @media (max-width: 600px) {
+
+        #accept-employee-page {
+            padding: 30px 15px !important;
+        }
+
+
+        #accept-employee-page .accept-box {
+            padding: 25px !important;
+        }
+
+
+        #accept-employee-page .accept-actions {
+            flex-direction: column !important;
+            align-items: stretch !important;
+        }
+
+
+        #accept-employee-page .accept-submit,
+        #accept-employee-page .accept-cancel {
+            width: 100% !important;
+        }
+
+    }
+
+</style>
+
+
+<div id="accept-employee-page">
+
+    <div class="accept-box">
+
+        <h1 class="accept-title">
+            Accept Employee
+        </h1>
+
+        <p class="accept-description">
+            Assign the employee's work information before approving
+            the registration request.
+        </p>
+
+
+        {% if error %}
+
+            <div class="accept-error">
+                {{ error }}
+            </div>
+
+        {% endif %}
+
+
+        <form method="POST">
+
+            {{ form.hidden_tag() }}
+
+
+            <div class="accept-field">
+
+                {{ form.phone.label }}
+
+                {{ form.phone(
+                    placeholder="Enter phone number"
+                ) }}
+
+                {% for error in form.phone.errors %}
+
+                    <span class="field-error">
+                        {{ error }}
+                    </span>
+
+                {% endfor %}
+
+            </div>
+
+
+            <div class="accept-field">
+
+                {{ form.position.label }}
+
+                {{ form.position(
+                    placeholder="e.g. Backend Developer"
+                ) }}
+
+                {% for error in form.position.errors %}
+
+                    <span class="field-error">
+                        {{ error }}
+                    </span>
+
+                {% endfor %}
+
+            </div>
+
+
+            <div class="accept-field">
+
+                {{ form.department_id.label }}
+
+                {{ form.department_id() }}
+
+                {% for error in form.department_id.errors %}
+
+                    <span class="field-error">
+                        {{ error }}
+                    </span>
+
+                {% endfor %}
+
+            </div>
+
+
+            <div class="accept-field">
+
+                {{ form.hire_date.label }}
+
+                {{ form.hire_date() }}
+
+                {% for error in form.hire_date.errors %}
+
+                    <span class="field-error">
+                        {{ error }}
+                    </span>
+
+                {% endfor %}
+
+            </div>
+
+
+            <div class="accept-field">
+
+                {{ form.salary.label }}
+
+                {{ form.salary(
+                    placeholder="Enter salary"
+                ) }}
+
+                {% for error in form.salary.errors %}
+
+                    <span class="field-error">
+                        {{ error }}
+                    </span>
+
+                {% endfor %}
+
+            </div>
+
+
+            <div class="accept-actions">
+
+                <button
+                    type="submit"
+                    class="accept-submit"
+                >
+                    Accept Employee
+                </button>
+
+
+                <a
+                    href="{{ url_for('registration_requests') }}"
+                    class="accept-cancel"
+                >
+                    Cancel
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

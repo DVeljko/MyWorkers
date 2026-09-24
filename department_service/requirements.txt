@@ -2,3 +2,4 @@ Flask
 Flask-SQLAlchemy
 python-dotenv
 requests
+Flask-JWT-Extended

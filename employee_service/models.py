@@ -16,6 +16,7 @@ class Employee(db.Model):
     salary: Mapped[float] = mapped_column(nullable=False)
     status: Mapped[str] = mapped_column(nullable=False)
     department_id: Mapped[int] = mapped_column(nullable=False)
+    company_id: Mapped[int] = mapped_column(nullable=False)
 
     def to_dict(self):
         return {
@@ -28,5 +29,6 @@ class Employee(db.Model):
             "hire_date": self.hire_date.isoformat(),
             "salary": self.salary,
             "status": self.status,
-            "department_id": self.department_id
+            "department_id": self.department_id,
+            "company_id": self.company_id
         }

@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+
+{% block title %}
+Registration Requests | MyWorkers
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .requests-page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 45px 25px;
+    }
+
+    .requests-header {
+        margin-bottom: 35px;
+    }
+
+    .requests-header h1 {
+        margin: 0 0 8px 0;
+        font-size: 32px;
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    .requests-header p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 15px;
+    }
+
+    .requests-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 18px;
+        padding: 7px 13px;
+        border-radius: 20px;
+        background: #eef2ff;
+        color: #4338ca;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .requests-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .request-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 22px 25px;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 25px;
+
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+        transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease,
+            border-color 0.2s ease;
+    }
+
+    .request-card:hover {
+        transform: translateY(-2px);
+        border-color: #d1d5db;
+        box-shadow: 0 7px 18px rgba(0, 0, 0, 0.07);
+    }
+
+    .request-user {
+        display: flex;
+        align-items: center;
+        gap: 17px;
+        min-width: 0;
+    }
+
+    .request-avatar {
+        width: 50px;
+        height: 50px;
+        flex-shrink: 0;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 50%;
+        background: #eef2ff;
+        color: #4f46e5;
+
+        font-size: 18px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .request-info h3 {
+        margin: 0 0 6px 0;
+        color: #111827;
+        font-size: 17px;
+        font-weight: 650;
+    }
+
+    .request-email {
+        margin: 0 0 8px 0;
+        color: #6b7280;
+        font-size: 14px;
+        word-break: break-word;
+    }
+
+    .request-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+
+        padding: 5px 9px;
+        border-radius: 15px;
+
+        background: #fff7ed;
+        color: #c2410c;
+
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+
+    .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #f97316;
+    }
+
+    .request-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .request-actions form {
+        margin: 0;
+        padding: 0;
+        border: none;
+        background: transparent;
+        box-shadow: none;
+        width: auto;
+    }
+
+    .action-btn {
+        border: none;
+        border-radius: 8px;
+        padding: 10px 17px;
+
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        transition:
+            background 0.2s ease,
+            transform 0.15s ease;
+    }
+
+    .accept-btn {
+        background: #4f46e5;
+        color: white;
+    }
+
+    .accept-btn:hover {
+        background: #4338ca;
+        transform: translateY(-1px);
+    }
+
+    .reject-btn {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+    }
+
+    .reject-btn:hover {
+        background: #fee2e2;
+        transform: translateY(-1px);
+    }
+
+    .error-message {
+        margin-bottom: 25px;
+        padding: 14px 17px;
+
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 9px;
+
+        color: #b91c1c;
+        font-size: 14px;
+    }
+
+    .empty-requests {
+        background: white;
+        border: 1px dashed #d1d5db;
+        border-radius: 14px;
+
+        padding: 60px 25px;
+        text-align: center;
+    }
+
+    .empty-icon {
+        width: 55px;
+        height: 55px;
+
+        margin: 0 auto 18px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 50%;
+        background: #f3f4f6;
+
+        font-size: 25px;
+    }
+
+    .empty-requests h3 {
+        margin: 0 0 7px 0;
+        color: #1f2937;
+        font-size: 18px;
+    }
+
+    .empty-requests p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 14px;
+    }
+
+    @media (max-width: 700px) {
+        .requests-page {
+            padding: 30px 15px;
+        }
+
+        .request-card {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .request-actions {
+            width: 100%;
+        }
+
+        .request-actions a,
+        .request-actions form {
+            flex: 1;
+        }
+
+        .request-actions form button {
+            width: 100%;
+        }
+
+        .action-btn {
+            width: 100%;
+        }
+    }
+</style>
+
+
+<div class="requests-page">
+
+    <div class="requests-header">
+        <h1>Registration Requests</h1>
+
+        <p>
+            Review and manage employees requesting access to your company.
+        </p>
+
+        {% if registration_requests %}
+            <div class="requests-count">
+                {{ registration_requests|length }}
+                pending request{% if registration_requests|length != 1 %}s{% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+
+    {% if error %}
+        <div class="error-message">
+            {{ error }}
+        </div>
+    {% endif %}
+
+
+    {% if registration_requests %}
+
+        <div class="requests-list">
+
+            {% for registration_request in registration_requests %}
+
+                <div class="request-card">
+
+                    <div class="request-user">
+
+                        <div class="request-avatar">
+                            {{ registration_request.first_name[0] }}
+                            {{ registration_request.last_name[0] }}
+                        </div>
+
+                        <div class="request-info">
+
+                            <h3>
+                                {{ registration_request.first_name }}
+                                {{ registration_request.last_name }}
+                            </h3>
+
+                            <p class="request-email">
+                                {{ registration_request.email }}
+                            </p>
+
+                            <div class="request-status">
+                                <span class="status-dot"></span>
+                                {{ registration_request.status }}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="request-actions">
+
+                        <a
+                            href="{{ url_for(
+                                'accept_registration_request',
+                                request_id=registration_request.id
+                            ) }}"
+                            class="action-btn accept-btn"
+                        >
+                            Accept
+                        </a>
+
+                        <form
+                            method="POST"
+                            action="{{ url_for(
+                                'reject_registration_request',
+                                request_id=registration_request.id
+                            ) }}"
+                        >
+                            <button
+                                type="submit"
+                                class="action-btn reject-btn"
+                            >
+                                Reject
+                            </button>
+                        </form>
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <div class="empty-requests">
+
+            <div class="empty-icon">
+                ✓
+            </div>
+
+            <h3>No pending requests</h3>
+
+            <p>
+                New employee registration requests will appear here.
+            </p>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

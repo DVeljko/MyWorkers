@@ -6,10 +6,12 @@ db = SQLAlchemy()
 class Department(db.Model):
     __tablename__ = "departments"
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(nullable=False)
+    company_id: Mapped[int] = mapped_column(nullable=False)
 
     def to_dict(self):
         return {
             "id": self.id,
-            "name": self.name
+            "name": self.name,
+            "company_id": self.company_id
             }

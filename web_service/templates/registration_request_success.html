@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}
+Request Sent | MyWorkers
+{% endblock %}
+
+{% block content %}
+
+<style>
+
+    .success-page {
+        min-height: calc(100vh - 70px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 30px;
+        box-sizing: border-box;
+    }
+
+    .success-card {
+        width: 100%;
+        max-width: 520px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        padding: 50px 40px;
+        text-align: center;
+        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
+    }
+
+    .success-icon {
+        width: 72px;
+        height: 72px;
+        margin: 0 auto 24px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 50%;
+        background: #ecfdf5;
+        color: #16a34a;
+
+        font-size: 34px;
+        font-weight: bold;
+    }
+
+    .success-card h1 {
+        margin: 0 0 12px;
+        color: #111827;
+        font-size: 27px;
+    }
+
+    .success-card p {
+        margin: 0 auto 30px;
+        max-width: 390px;
+
+        color: #6b7280;
+        font-size: 15px;
+        line-height: 1.6;
+    }
+
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        padding: 12px 24px;
+
+        background: #2563eb;
+        color: white;
+
+        border-radius: 8px;
+
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+
+        transition: background 0.2s ease;
+    }
+
+    .back-button:hover {
+        background: #1d4ed8;
+    }
+
+</style>
+
+
+<div class="success-page">
+
+    <div class="success-card">
+
+        <div class="success-icon">
+            ✓
+        </div>
+
+        <h1>
+            Request Sent Successfully
+        </h1>
+
+        <p>
+            Your request to join the company has been sent successfully.
+            An administrator will review your request before you can access
+            the company.
+        </p>
+
+        <a
+            href="{{ url_for('index') }}"
+            class="back-button"
+        >
+            Back
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}
