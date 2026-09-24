@@ -15,11 +15,17 @@ services:
 
   attendance_service:
     build: ./attendance_service
-    ports: 
+
+    ports:
       - "5003:5003"
+
     env_file:
       - ./attendance_service/.env
 
+    volumes:
+      - ./attendance_service/migrations:/app/migrations
+      - ./attendance_service/instance:/app/instance
+      
   auth_service:
     build: ./auth_service
     ports:
