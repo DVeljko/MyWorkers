@@ -6,12 +6,21 @@ services:
       - "5001:5001"
     env_file:
       - ./department_service/.env
+    volumes:
+      - ./department_service/migrations:/app/migrations
+      - ./department_service/instance:/app/instance
+
   employee_service:
     build: ./employee_service
     ports:
       - "5002:5002"
     env_file:
       - ./employee_service/.env
+    volumes:
+      - ./employee_service/migrations:/app/migrations
+      - ./employee_service/instance:/app/instance
+
+
 
   attendance_service:
     build: ./attendance_service
@@ -25,6 +34,8 @@ services:
     volumes:
       - ./attendance_service/migrations:/app/migrations
       - ./attendance_service/instance:/app/instance
+
+
       
   auth_service:
     build: ./auth_service
@@ -33,7 +44,10 @@ services:
     env_file:
       - ./auth_service/.env
     volumes:
+      - ./auth_service/migrations:/app/migrations
       - ./auth_service/instance:/app/instance
+
+      
 
   web_service:
     build: ./web_service

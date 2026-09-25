@@ -6,6 +6,7 @@ import os
 from sqlalchemy import or_
 from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt
+from flask_migrate import Migrate
 
 load_dotenv()
 
@@ -18,10 +19,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///employees.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
+migrate = Migrate(app, db)
 jwt = JWTManager(app)
-
-with app.app_context():
-    db.create_all()
 
 
 def get_auth_headers():
