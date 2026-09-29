@@ -20,7 +20,13 @@ load_dotenv()
 app = Flask(__name__)
 
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"
+
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
+    "DATABASE_URL",
+    "sqlite:///users.db"
+)
+
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 
@@ -231,10 +237,7 @@ def get_registration_requests():
 # ACCEPT REGISTRATION REQUEST
 # --------------------------------------------------
 
-@app.route(
-    "/registration-requests/<int:request_id>/accept",
-    methods=["POST"]
-)
+@app.route("/registration-requests/<int:request_id>/accept",methods=["POST"])
 @jwt_required()
 def accept_registration_request(request_id):
 
@@ -328,10 +331,7 @@ def accept_registration_request(request_id):
 # REJECT REGISTRATION REQUEST
 # --------------------------------------------------
 
-@app.route(
-    "/registration-requests/<int:request_id>/reject",
-    methods=["POST"]
-)
+@app.route("/registration-requests/<int:request_id>/reject",methods=["POST"])
 @jwt_required()
 def reject_registration_request(request_id):
 
@@ -386,24 +386,15 @@ def login():
     email = data.get("email")
     password = data.get("password")
 
-    user_exists = db.session.scalar(
-        db.select(User).where(
-            User.email == email
-        )
-    )
+    user_exists = db.session.scalar(db.select(User).where(User.email == email))
 
     if not user_exists:
         return jsonify({
             "error": "There is no employee with this email"
         }), 401
 
-    if not check_password_hash(
-        user_exists.password,
-        password
-    ):
-        return jsonify({
-            "error": "Wrong password"
-        }), 401
+    if not check_password_hash(user_exists.password,password):
+        return jsonify({"error": "Wrong password"}), 401
 
     login_user(user_exists)
 
@@ -535,7 +526,7 @@ def link_user_employee(user_id):
 
     if user.email != employee["email"]:
         return jsonify({
-            "error": "User email and employee email do not match"
+            "error": "User email does not match employee email"
         }), 400
 
     user.employee_id = employee_id
