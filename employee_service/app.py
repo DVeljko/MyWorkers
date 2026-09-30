@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from models import db, Employee
+from employee_service.models import db, Employee
 from datetime import date
 import requests
 import os
@@ -15,7 +15,12 @@ DEPARTMENT_SERVICE_URL = os.getenv("DEPARTMENT_SERVICE_URL")
 app = Flask(__name__)
 
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///employees.db"
+
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
+    "DATABASE_URL",
+    "sqlite:///employees.db"
+)
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
@@ -74,12 +79,7 @@ def get_all_employees():
     )
 
     if name:
-        query = query.where(
-            or_(
-                Employee.first_name.ilike(f"%{name}%"),
-                Employee.last_name.ilike(f"%{name}%")
-            )
-        )
+        query = query.where(or_(Employee.first_name.ilike(f"%{name}%"), Employee.last_name.ilike(f"%{name}%")))
 
     employees = db.session.scalars(query).all()
 
