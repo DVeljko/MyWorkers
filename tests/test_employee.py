@@ -22,7 +22,7 @@ def client():
         db.session.remove()
         db.drop_all()
 
-def fake_department_get(*args, **kwargs):
+def fake_single_department_get(*args, **kwargs):
     class FakeResponse:
         status_code = 200
 
@@ -34,8 +34,27 @@ def fake_department_not_found(*args, **kwargs):
 
     return FakeResponse()
 
+def fake_departments_get(*args, **kwargs):
+    class FakeResponse:
+        status_code = 200
+
+        def json(self):
+            return [
+                {"id": 1, "name": "IT"},
+                {"id": 2, "name": "Design"}
+            ]
+
+    return FakeResponse()
+
 def fake_department_service_unavailable(*args, **kwargs):
     raise requests.exceptions.RequestException
+
+def fake_departments_server_error(*args, **kwargs):
+    class FakeResponse:
+        status_code = 500
+
+    return FakeResponse()
+
 
 def test_app_exists():
     assert app is not None
@@ -161,7 +180,7 @@ def test_get_employees_by_department(client, monkeypatch):
 
     monkeypatch.setattr(
         "employee_service.app.requests.get",
-        fake_department_get
+        fake_single_department_get
     )
 
     with app.app_context():
@@ -501,3 +520,146 @@ def test_get_single_employee_from_another_company(client):
 
     error = response.get_json().get("error")
     assert error == "Employee not found"
+
+
+def test_dashboard_as_admin(client, monkeypatch):
+
+    monkeypatch.setattr("employee_service.app.requests.get", fake_departments_get)
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+        employee1 = Employee(
+            first_name = "Nemo",
+            last_name = "Milanovic",
+            email = "nemo123@gmail.com",
+            phone = "12354522444",
+            position = "Designer",
+            hire_date = date.today(),
+            salary = 2000,
+            status = "active",
+            department_id = 1,
+            company_id = 1
+        )
+
+        employee2 = Employee(
+            first_name = "Velja",
+            last_name = "Dimitrijevic",
+            email = "velja123@gmail.com",
+            phone = "034723408234",
+            position = "Developer",
+            hire_date = date.today(),
+            salary = 2000,
+            status = "active",
+            department_id = 2,
+            company_id = 1
+        )
+
+        employee3 = Employee(
+            first_name = "Nensi",
+            last_name = "Rankovic",
+            email = "nensi123@gmail.com",
+            phone = "45645675446",
+            position = "Frontend Developer",
+            hire_date = date.today(),
+            salary = 2000,
+            status = "active",
+            department_id = 2,
+            company_id = 1
+        )
+
+        db.session.add(employee1)
+        db.session.add(employee2)
+        db.session.add(employee3)
+        db.session.commit()
+
+
+    response = client.get(
+        "/dashboard",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["total_employees"] == 3
+    assert data["active_employees"] == 3
+    assert data["inactive_employees"] == 0
+    assert data["total_departments"] == 2
+
+def test_dashboard_as_employee(client):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="test@test.com",
+            additional_claims={
+                "role": "employee",
+                "company_id": 1
+            }
+        )
+
+    response = client.get(
+        "/dashboard",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 403
+    error = response.get_json().get("error")
+    assert error == "Only admin or manager can see dashboard"
+
+def test_dashboard_department_service_unavailable(client, monkeypatch):
+
+    monkeypatch.setattr("employee_service.app.requests.get", fake_department_service_unavailable)
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.get(
+        "/dashboard",
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 503
+    error = response.get_json().get("error")
+    assert error == "Department service is unavailable"
+
+def test_dashboard_department_service_error(client, monkeypatch):
+
+    monkeypatch.setattr("employee_service.app.requests.get", fake_departments_server_error)
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.get(
+        "/dashboard",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 500
+    error = response.get_json().get('error')
+    assert error == "Could not load departments"
