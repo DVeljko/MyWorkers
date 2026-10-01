@@ -663,3 +663,147 @@ def test_dashboard_department_service_error(client, monkeypatch):
     assert response.status_code == 500
     error = response.get_json().get('error')
     assert error == "Could not load departments"
+
+def test_add_employee_as_admin(client, monkeypatch):
+
+    monkeypatch.setattr("employee_service.app.requests.get", fake_single_department_get)
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.post(
+        "/employees",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        },
+        json={
+            "first_name": "Veljko",
+            "last_name": "Dimitrijevic",
+            "email": "veljko@test.com",
+            "phone": "123456789",
+            "position": "Backend Developer",
+            "hire_date": "2026-10-01",
+            "salary": 2500,
+            "status": "active",
+            "department_id": 1
+        }
+    )
+
+    assert response.status_code == 201
+
+    data = response.get_json()
+    assert data["first_name"] == "Veljko"
+    assert data["email"] == "veljko@test.com"
+    assert data["company_id"] == 1
+    assert data["department_id"] == 1
+
+    with app.app_context():
+        employee = db.session.scalar(
+            db.select(Employee).where(
+                Employee.email == "veljko@test.com"
+            )
+        )
+
+        assert employee is not None
+        assert employee.first_name == "Veljko"
+        assert employee.company_id == 1
+
+def test_add_employee_as_employee(client):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="employee@test.com",
+            additional_claims={
+                "role": "employee",
+                "company_id": 1
+            }
+        )
+
+    response = client.post(
+        "/employees",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 403
+    error = response.get_json().get("error")
+    assert error == "Only admin can add an employee"
+
+
+def test_add_employee_department_not_found(client, monkeypatch):
+
+    monkeypatch.setattr("employee_service.app.requests.get", fake_department_not_found)
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.post(
+        "/employees",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        },
+        json={
+            "first_name": "Veljko",
+            "last_name": "Dimitrijevic",
+            "email": "veljko@test.com",
+            "phone": "123456789",
+            "position": "Backend Developer",
+            "hire_date": "2026-10-01",
+            "salary": 2500,
+            "status": "active",
+            "department_id": 1
+        }
+
+    )
+
+    assert response.status_code == 400
+    error = response.get_json().get("error")
+    assert error == "Department does not exist"
+
+def test_add_employee_department_service_unavailable(client, monkeypatch):
+
+    monkeypatch.setattr("employee_service.app.requests.get", fake_department_service_unavailable)
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.post(
+        "/employees",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        },
+        json={
+            "first_name": "Veljko",
+            "last_name": "Dimitrijevic",
+            "email": "veljko@test.com",
+            "phone": "123456789",
+            "position": "Backend Developer",
+            "hire_date": "2026-10-01",
+            "salary": 2500,
+            "status": "active",
+            "department_id": 1
+        }
+    )
+
+    assert response.status_code == 503
+    error = response.get_json().get("error")
+    assert error == "Department service is unavailable"
