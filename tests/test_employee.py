@@ -1059,3 +1059,150 @@ def test_update_employee_department_service_unavailable(client, monkeypatch):
 
     error = response.get_json().get("error")
     assert error == "Department service is unavailable"
+
+def test_delete_employee_as_admin(client):
+
+    with app.app_context():
+
+        employee = Employee(
+            first_name="Veljko",
+            last_name="Dimitrijevic",
+            email="veljko123@gmail.com",
+            phone="23564323555",
+            position="Backend Developer",
+            hire_date=date.today(),
+            salary=3000,
+            status="active",
+            department_id=1,
+            company_id=1
+        )
+
+        db.session.add(employee)
+        db.session.commit()
+
+        employee_id = employee.id
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.delete(
+        f"/employee/{employee_id}",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert data["message"] == "Employee deleted successfully"
+
+    # Proveravamo da je stvarno obrisan iz baze
+    with app.app_context():
+        deleted_employee = db.session.get(Employee, employee_id)
+
+        assert deleted_employee is None
+
+
+def test_delete_employee_as_employee(client):
+
+    with app.app_context():
+
+        access_token = create_access_token(
+            identity="employee@test.com",
+            additional_claims={
+                "role": "employee",
+                "company_id": 1
+            }
+        )
+
+    response = client.delete(
+        "/employee/1",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 403
+
+    error = response.get_json().get("error")
+    assert error == "Admin access required"
+
+
+def test_delete_employee_not_found(client):
+
+    with app.app_context():
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.delete(
+        "/employee/999",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 404
+
+    error = response.get_json().get("error")
+    assert error == "Employee not found"
+
+
+def test_delete_employee_from_another_company(client):
+
+    with app.app_context():
+
+        employee = Employee(
+            first_name="Veljko",
+            last_name="Dimitrijevic",
+            email="veljko123@gmail.com",
+            phone="23564323555",
+            position="Backend Developer",
+            hire_date=date.today(),
+            salary=3000,
+            status="active",
+            department_id=1,
+            company_id=2
+        )
+
+        db.session.add(employee)
+        db.session.commit()
+
+        employee_id = employee.id
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.delete(
+        f"/employee/{employee_id}",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 404
+
+    error = response.get_json().get("error")
+    assert error == "Employee not found"
+
+    # Employee iz company 2 mora i dalje da postoji
+    with app.app_context():
+        employee_still_exists = db.session.get(Employee, employee_id)
+
+        assert employee_still_exists is not None
