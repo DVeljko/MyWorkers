@@ -282,6 +282,7 @@ def update_employee(employee_id):
             return error
 
     allowed_fields = [
+        "email",
         "phone",
         "position",
         "salary",

@@ -807,3 +807,255 @@ def test_add_employee_department_service_unavailable(client, monkeypatch):
     assert response.status_code == 503
     error = response.get_json().get("error")
     assert error == "Department service is unavailable"
+
+
+# TESTING @app.route("/employees/<int:employee_id>", methods=["PATCH"])
+def test_update_employee_as_admin(client):
+
+    with app.app_context():
+
+        employee = Employee(
+            first_name = "Veljko",
+            last_name = "Dimitrijevic",
+            email = "veljko123@gmail.com",
+            phone = "23564323555",
+            position = "Backend Developer",
+            hire_date = date.today(),
+            salary = 3000,
+            status = "active",
+            department_id = 1,
+            company_id = 1
+        )
+
+
+        db.session.add(employee)
+        db.session.commit()
+        employee_id = employee.id
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.patch(
+        f"/employees/{employee_id}",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        },
+        json={
+            "position": "Senior Backend Developer",
+            "salary": 3500,
+            "status": "inactive",
+            "email": "dveljko333333@gmail.com"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["position"] == "Senior Backend Developer"
+    assert data["salary"] == 3500
+    assert data["status"] == "inactive"
+    assert data["email"] == "dveljko333333@gmail.com"
+
+
+def test_update_employee_as_employee(client):
+
+    with app.app_context():
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "employee",
+                "company_id": 1
+            }
+        )
+
+    response = client.patch(
+        f"/employees/1",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        },
+        json={
+            "phone": "324235234"
+        }
+    )
+
+    assert response.status_code == 403
+    error = response.get_json().get("error")
+    assert error == "Only admin can update employee"
+
+
+def test_update_employee_not_found(client):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.patch(
+        f"/employees/999",
+        headers={
+            "Authorization": f"Bearer {access_token}",
+        },
+        json={
+            "phone": "123123123123"
+        }
+    )
+
+    assert response.status_code == 404
+    error = response.get_json().get("error")
+    assert error == "Employee not found"
+
+def test_update_employee_from_another_company(client):
+
+    with app.app_context():
+
+        employee = Employee(
+            first_name="Veljko",
+            last_name="Dimitrijevic",
+            email="veljko123@gmail.com",
+            phone="23564323555",
+            position="Backend Developer",
+            hire_date=date.today(),
+            salary=3000,
+            status="active",
+            department_id=1,
+            company_id=2
+        )
+
+        db.session.add(employee)
+        db.session.commit()
+
+        employee_id = employee.id
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.patch(
+        f"/employees/{employee_id}",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        },
+        json={
+            "salary": 5000
+        }
+    )
+
+    assert response.status_code == 404
+
+    error = response.get_json().get("error")
+    assert error == "Employee not found"
+
+def test_update_employee_department_not_found(client, monkeypatch):
+
+    monkeypatch.setattr(
+        "employee_service.app.requests.get",
+        fake_department_not_found
+    )
+
+    with app.app_context():
+
+        employee = Employee(
+            first_name="Veljko",
+            last_name="Dimitrijevic",
+            email="veljko123@gmail.com",
+            phone="23564323555",
+            position="Backend Developer",
+            hire_date=date.today(),
+            salary=3000,
+            status="active",
+            department_id=1,
+            company_id=1
+        )
+
+        db.session.add(employee)
+        db.session.commit()
+
+        employee_id = employee.id
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.patch(
+        f"/employees/{employee_id}",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        },
+        json={
+            "department_id": 999
+        }
+    )
+
+    assert response.status_code == 400
+
+    error = response.get_json().get("error")
+    assert error == "Department does not exist"
+
+def test_update_employee_department_service_unavailable(client, monkeypatch):
+
+    monkeypatch.setattr(
+        "employee_service.app.requests.get",
+        fake_department_service_unavailable
+    )
+
+    with app.app_context():
+
+        employee = Employee(
+            first_name="Veljko",
+            last_name="Dimitrijevic",
+            email="veljko123@gmail.com",
+            phone="23564323555",
+            position="Backend Developer",
+            hire_date=date.today(),
+            salary=3000,
+            status="active",
+            department_id=1,
+            company_id=1
+        )
+
+        db.session.add(employee)
+        db.session.commit()
+
+        employee_id = employee.id
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.patch(
+        f"/employees/{employee_id}",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        },
+        json={
+            "department_id": 2
+        }
+    )
+
+    assert response.status_code == 503
+
+    error = response.get_json().get("error")
+    assert error == "Department service is unavailable"
