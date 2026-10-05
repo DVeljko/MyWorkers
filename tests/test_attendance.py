@@ -1079,3 +1079,143 @@ def test_get_attendance_no_data_for_employee(client, monkeypatch):
     error = response.get_json().get("error")
 
     assert error == "There is no data for this employee"
+
+
+def test_delete_attendance_as_admin(client):
+
+    with app.app_context():
+        attendance = Attendance(
+            employee_id=5,
+            company_id=1,
+            arrival_time=datetime.now()
+        )
+
+        db.session.add(attendance)
+        db.session.commit()
+
+        attendance_id = attendance.id
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.delete(
+        f"/attendance/{attendance_id}",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["message"] == "Attendance deleted successfully"
+
+    with app.app_context():
+        deleted_attendance = db.session.get(
+            Attendance,
+            attendance_id
+        )
+
+        assert deleted_attendance is None
+
+
+def test_delete_attendance_as_employee(client):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="employee@test.com",
+            additional_claims={
+                "role": "employee",
+                "company_id": 1,
+                "employee_id": 5
+            }
+        )
+
+    response = client.delete(
+        "/attendance/1",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 403
+
+    error = response.get_json().get("error")
+
+    assert error == "Only admin can delete attendance of employee"
+
+
+def test_delete_attendance_not_found(client):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.delete(
+        "/attendance/999",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 404
+
+    error = response.get_json().get("error")
+
+    assert error == "Attendance not found"
+
+
+def test_delete_attendance_from_another_company(client):
+
+    with app.app_context():
+        attendance = Attendance(
+            employee_id=10,
+            company_id=2,
+            arrival_time=datetime.now()
+        )
+
+        db.session.add(attendance)
+        db.session.commit()
+
+        attendance_id = attendance.id
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.delete(
+        f"/attendance/{attendance_id}",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 404
+
+    error = response.get_json().get("error")
+
+    assert error == "Attendance not found"
+
+    # Provjeravamo da zapis druge kompanije NIJE obrisan
+    with app.app_context():
+        attendance_still_exists = db.session.get(
+            Attendance,
+            attendance_id
+        )
+
+        assert attendance_still_exists is not None
