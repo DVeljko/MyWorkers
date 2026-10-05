@@ -267,4 +267,176 @@ def test_add_duplicate_department(client):
     error = response.get_json().get("error")
     assert error == "A department with this name already exists."
 
-    
+
+def test_update_department_as_admin(client):
+
+    with app.app_context():
+
+        department = Department(
+            name="IT",
+            company_id=1
+        )
+
+        db.session.add(department)
+        db.session.commit()
+
+        department_id = department.id
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.patch(
+        f"/departments/{department_id}",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        },
+        json={
+            "name": "Backend"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert data["name"] == "Backend"
+    assert data["company_id"] == 1
+
+def test_update_department_as_employee(client):
+
+    with app.app_context():
+
+        access_token = create_access_token(
+            identity="employee@test.com",
+            additional_claims={
+                "role": "employee",
+                "company_id": 1
+            }
+        )
+
+    response = client.patch(
+        "/departments/1",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        },
+        json={
+            "name": "Backend"
+        }
+    )
+
+    assert response.status_code == 403
+
+    error = response.get_json().get("error")
+    assert error == "Admin only"
+
+def test_update_department_not_found(client):
+
+    with app.app_context():
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.patch(
+        "/departments/999",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        },
+        json={
+            "name": "Backend"
+        }
+    )
+
+    assert response.status_code == 404
+
+    error = response.get_json().get("error")
+    assert error == "Department not found"
+
+
+def test_update_department_from_another_company(client):
+
+    with app.app_context():
+
+        department = Department(
+            name="IT",
+            company_id=2
+        )
+
+        db.session.add(department)
+        db.session.commit()
+
+        department_id = department.id
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.patch(
+        f"/departments/{department_id}",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        },
+        json={
+            "name": "Backend"
+        }
+    )
+
+    assert response.status_code == 404
+
+    error = response.get_json().get("error")
+    assert error == "Department not found"
+
+def test_update_department_duplicate_name(client):
+
+    with app.app_context():
+
+        department1 = Department(
+            name="IT",
+            company_id=1
+        )
+
+        department2 = Department(
+            name="Backend",
+            company_id=1
+        )
+
+        db.session.add(department1)
+        db.session.add(department2)
+        db.session.commit()
+
+        department_id = department1.id
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.patch(
+        f"/departments/{department_id}",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        },
+        json={
+            "name": "Backend"
+        }
+    )
+
+    assert response.status_code == 409
+
+    error = response.get_json().get("error")
+    assert error == "A department with this name already exists."
