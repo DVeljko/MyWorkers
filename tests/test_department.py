@@ -131,7 +131,7 @@ def test_get_single_department_not_found(client):
     assert error == "Department not found"
 
 
-def test_get_single_department(client):
+def test_get_single_department_from_another_company(client):
 
     with app.app_context():
 
@@ -162,3 +162,109 @@ def test_get_single_department(client):
     assert response.status_code == 404
     error = response.get_json().get("error")
     assert error == "Department not found"
+
+
+def test_add_department_as_admin(client):
+
+    with app.app_context():
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role" : "admin",
+                "company_id" : 1
+            }
+        )
+
+    response = client.post(
+        f"/departments",
+        headers={
+            "Authorization": f"Bearer {access_token}",
+        },
+        json={
+            "name": "IT",
+        }
+    )
+
+    assert response.status_code == 201
+    data = response.get_json()
+    assert data['name'] == "IT"
+    assert data['company_id'] == 1
+
+
+    with app.app_context():
+        department = db.session.scalar(
+            db.select(Department).where(
+                Department.name == "IT"
+            )
+        )
+
+        assert department is not None
+        assert department.company_id == 1
+
+
+def test_add_department_as_employee(client):
+
+    with app.app_context():
+
+        access_token = create_access_token(
+            identity="employee@test.com",
+            additional_claims={
+                "role": "employee",
+                "company_id": 1
+            }
+        )
+
+
+    response = client.post(
+        "/departments",
+        headers={
+            "Authorization": f"Bearer {access_token}",
+        },
+        json={
+            "name": "IT"
+        }
+    )
+
+    assert response.status_code == 403
+    error = response.get_json().get("error")
+
+    assert error == "Admin only"
+
+
+def test_add_duplicate_department(client):
+
+    with app.app_context():
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+        department = Department(
+            name = "IT",
+            company_id = 1
+        )
+
+        db.session.add(department)
+        db.session.commit()
+
+
+    response = client.post(
+        "/departments",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        },
+        json={
+            "name": "IT"
+        }
+    )
+
+    assert response.status_code == 409
+    error = response.get_json().get("error")
+    assert error == "A department with this name already exists."
+
+    
