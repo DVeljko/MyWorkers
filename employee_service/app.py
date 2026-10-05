@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from models import db, Employee
+from employee_service.models import db, Employee
 from datetime import date
 import requests
 import os

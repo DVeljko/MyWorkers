@@ -1,7 +1,7 @@
 from flask import Flask, abort, request, jsonify
 from flask_login import LoginManager, login_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import User, db, Company, RegistrationRequest
+from auth_service.models import User, db, Company, RegistrationRequest
 from dotenv import load_dotenv
 import os
 from functools import wraps

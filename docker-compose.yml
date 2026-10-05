@@ -1,51 +1,56 @@
 services:
 
   department_service:
-    build: ./department_service
+    build:
+      context: .
+      dockerfile: department_service/Dockerfile
     ports:
       - "5001:5001"
     env_file:
       - ./department_service/.env
     volumes:
-      - ./department_service/migrations:/app/migrations
-      - ./department_service/instance:/app/instance
+      - ./department_service/migrations:/app/department_service/migrations
+      - ./department_service/instance:/app/department_service/instance
 
   employee_service:
-    build: ./employee_service
+    build:
+      context: .
+      dockerfile: employee_service/Dockerfile
     ports:
       - "5002:5002"
     env_file:
       - ./employee_service/.env
     volumes:
-      - ./employee_service/migrations:/app/migrations
-      - ./employee_service/instance:/app/instance
+      - ./employee_service/migrations:/app/employee_service/migrations
+      - ./employee_service/instance:/app/employee_service/instance
 
 
 
   attendance_service:
-    build: ./attendance_service
-
+    build:
+      context: .
+      dockerfile: attendance_service/Dockerfile
     ports:
       - "5003:5003"
-
     env_file:
       - ./attendance_service/.env
-
     volumes:
-      - ./attendance_service/migrations:/app/migrations
-      - ./attendance_service/instance:/app/instance
+      - ./attendance_service/migrations:/app/attendance_service/migrations
+      - ./attendance_service/instance:/app/attendance_service/instance
 
 
       
   auth_service:
-    build: ./auth_service
+    build:
+      context: .
+      dockerfile: auth_service/Dockerfile
     ports:
       - "5004:5004"
     env_file:
       - ./auth_service/.env
     volumes:
-      - ./auth_service/migrations:/app/migrations
-      - ./auth_service/instance:/app/instance
+      - ./auth_service/migrations:/app/auth_service/migrations
+      - ./auth_service/instance:/app/auth_service/instance
 
       
 
