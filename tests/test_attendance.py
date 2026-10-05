@@ -665,3 +665,166 @@ def test_get_all_attendance_company_isolation(client):
     assert len(data) == 1
     assert data[0]["employee_id"] == 5
     assert data[0]["company_id"] == 1
+
+
+def test_get_single_attendance_as_admin(client):
+
+    with app.app_context():
+        attendance = Attendance(
+            employee_id=5,
+            company_id=1,
+            arrival_time=datetime.now()
+        )
+
+        db.session.add(attendance)
+        db.session.commit()
+
+        attendance_id = attendance.id
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.get(
+        f"/attendance/{attendance_id}",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["id"] == attendance_id
+    assert data["employee_id"] == 5
+    assert data["company_id"] == 1
+
+
+def test_get_single_attendance_as_manager(client):
+
+    with app.app_context():
+        attendance = Attendance(
+            employee_id=5,
+            company_id=1,
+            arrival_time=datetime.now()
+        )
+
+        db.session.add(attendance)
+        db.session.commit()
+
+        attendance_id = attendance.id
+
+        access_token = create_access_token(
+            identity="manager@test.com",
+            additional_claims={
+                "role": "manager",
+                "company_id": 1
+            }
+        )
+
+    response = client.get(
+        f"/attendance/{attendance_id}",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["id"] == attendance_id
+    assert data["employee_id"] == 5
+    assert data["company_id"] == 1
+
+
+def test_get_single_attendance_as_employee(client):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="employee@test.com",
+            additional_claims={
+                "role": "employee",
+                "company_id": 1,
+                "employee_id": 5
+            }
+        )
+
+    response = client.get(
+        "/attendance/1",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 403
+
+    error = response.get_json().get("error")
+
+    assert error == "Only admin or manager can get attendance"
+
+
+def test_get_single_attendance_not_found(client):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.get(
+        "/attendance/999",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 404
+
+    error = response.get_json().get("error")
+
+    assert error == "Attendance not found"
+
+
+def test_get_single_attendance_from_another_company(client):
+
+    with app.app_context():
+        attendance = Attendance(
+            employee_id=10,
+            company_id=2,
+            arrival_time=datetime.now()
+        )
+
+        db.session.add(attendance)
+        db.session.commit()
+
+        attendance_id = attendance.id
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.get(
+        f"/attendance/{attendance_id}",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 404
+
+    error = response.get_json().get("error")
+
+    assert error == "Attendance not found"
