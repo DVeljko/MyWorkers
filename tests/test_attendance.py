@@ -513,3 +513,155 @@ def test_check_out_employee_service_unavailable(client, monkeypatch):
     error = response.get_json().get("error")
 
     assert error == "Employee service is unavailable"
+
+
+def test_get_all_attendance_as_admin(client):
+
+    with app.app_context():
+        attendance1 = Attendance(
+            employee_id=5,
+            company_id=1,
+            arrival_time=datetime.now()
+        )
+
+        attendance2 = Attendance(
+            employee_id=6,
+            company_id=1,
+            arrival_time=datetime.now()
+        )
+
+        db.session.add_all([
+            attendance1,
+            attendance2
+        ])
+        db.session.commit()
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.get(
+        "/attendance",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert len(data) == 2
+    assert data[0]["employee_id"] == 5
+    assert data[1]["employee_id"] == 6
+
+
+def test_get_all_attendance_as_manager(client):
+
+    with app.app_context():
+        attendance = Attendance(
+            employee_id=5,
+            company_id=1,
+            arrival_time=datetime.now()
+        )
+
+        db.session.add(attendance)
+        db.session.commit()
+
+        access_token = create_access_token(
+            identity="manager@test.com",
+            additional_claims={
+                "role": "manager",
+                "company_id": 1
+            }
+        )
+
+    response = client.get(
+        "/attendance",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert len(data) == 1
+    assert data[0]["employee_id"] == 5
+    assert data[0]["company_id"] == 1
+
+
+def test_get_all_attendance_as_employee(client):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="employee@test.com",
+            additional_claims={
+                "role": "employee",
+                "company_id": 1,
+                "employee_id": 5
+            }
+        )
+
+    response = client.get(
+        "/attendance",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 403
+
+    error = response.get_json().get("error")
+
+    assert error == "Only admin or manager can see all attendance"
+
+
+def test_get_all_attendance_company_isolation(client):
+
+    with app.app_context():
+        attendance_company_1 = Attendance(
+            employee_id=5,
+            company_id=1,
+            arrival_time=datetime.now()
+        )
+
+        attendance_company_2 = Attendance(
+            employee_id=10,
+            company_id=2,
+            arrival_time=datetime.now()
+        )
+
+        db.session.add_all([
+            attendance_company_1,
+            attendance_company_2
+        ])
+        db.session.commit()
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.get(
+        "/attendance",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert len(data) == 1
+    assert data[0]["employee_id"] == 5
+    assert data[0]["company_id"] == 1
