@@ -268,3 +268,248 @@ def test_check_in_employee_service_unavailable(client, monkeypatch):
     error = response.get_json().get("error")
 
     assert error == "Employee service is unavailable"
+
+def test_check_out_as_admin(client, monkeypatch):
+
+    with app.app_context():
+        attendance = Attendance(
+            employee_id=5,
+            company_id=1,
+            arrival_time=datetime.now()
+        )
+
+        db.session.add(attendance)
+        db.session.commit()
+
+        attendance_id = attendance.id
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    class FakeResponse:
+        status_code = 200
+
+    def fake_get(*args, **kwargs):
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "attendance_service.app.requests.get",
+        fake_get
+    )
+
+    response = client.patch(
+        "/attendance/5",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["employee_id"] == 5
+    assert data["company_id"] == 1
+    assert data["departure_time"] is not None
+
+    with app.app_context():
+        attendance = db.session.get(
+            Attendance,
+            attendance_id
+        )
+
+        assert attendance is not None
+        assert attendance.departure_time is not None
+
+def test_check_out_employee_himself(client, monkeypatch):
+
+    with app.app_context():
+        attendance = Attendance(
+            employee_id=5,
+            company_id=1,
+            arrival_time=datetime.now()
+        )
+
+        db.session.add(attendance)
+        db.session.commit()
+
+        attendance_id = attendance.id
+
+        access_token = create_access_token(
+            identity="employee@test.com",
+            additional_claims={
+                "role": "employee",
+                "company_id": 1,
+                "employee_id": 5
+            }
+        )
+
+    class FakeResponse:
+        status_code = 200
+
+    def fake_get(*args, **kwargs):
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "attendance_service.app.requests.get",
+        fake_get
+    )
+
+    response = client.patch(
+        "/attendance/5",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["employee_id"] == 5
+    assert data["company_id"] == 1
+    assert data["departure_time"] is not None
+
+    with app.app_context():
+        attendance = db.session.get(
+            Attendance,
+            attendance_id
+        )
+
+        assert attendance is not None
+        assert attendance.departure_time is not None
+
+
+def test_check_out_another_employee(client):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="employee@test.com",
+            additional_claims={
+                "role": "employee",
+                "company_id": 1,
+                "employee_id": 5
+            }
+        )
+
+    response = client.patch(
+        "/attendance/6",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 403
+
+    error = response.get_json().get("error")
+
+    assert error == "You can only check out yourself"
+
+def test_check_out_employee_not_checked_in(client, monkeypatch):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    class FakeResponse:
+        status_code = 200
+
+    def fake_get(*args, **kwargs):
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "attendance_service.app.requests.get",
+        fake_get
+    )
+
+    response = client.patch(
+        "/attendance/5",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 409
+
+    error = response.get_json().get("error")
+
+    assert error == "Employee is not checked in"
+
+
+def test_check_out_employee_not_found(client, monkeypatch):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    class FakeResponse:
+        status_code = 404
+
+    def fake_get(*args, **kwargs):
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "attendance_service.app.requests.get",
+        fake_get
+    )
+
+    response = client.patch(
+        "/attendance/999",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 400
+
+    error = response.get_json().get("error")
+
+    assert error == "Employee does not exist"
+
+
+def test_check_out_employee_service_unavailable(client, monkeypatch):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    def fake_get(*args, **kwargs):
+        raise requests.exceptions.RequestException
+
+    monkeypatch.setattr(
+        "attendance_service.app.requests.get",
+        fake_get
+    )
+
+    response = client.patch(
+        "/attendance/5",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 503
+
+    error = response.get_json().get("error")
+
+    assert error == "Employee service is unavailable"
