@@ -440,3 +440,139 @@ def test_update_department_duplicate_name(client):
 
     error = response.get_json().get("error")
     assert error == "A department with this name already exists."
+
+
+def test_delete_department_as_admin(client):
+
+    with app.app_context():
+
+        department = Department(
+            name="IT",
+            company_id=1
+        )
+
+        db.session.add(department)
+        db.session.commit()
+
+        department_id = department.id
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.delete(
+        f"/departments/{department_id}",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+    assert data["message"] == "Department deleted successfully"
+
+    with app.app_context():
+        deleted_department = db.session.get(
+            Department,
+            department_id
+        )
+
+        assert deleted_department is None
+
+
+def test_delete_department_as_employee(client):
+
+    with app.app_context():
+
+        access_token = create_access_token(
+            identity="employee@test.com",
+            additional_claims={
+                "role": "employee",
+                "company_id": 1
+            }
+        )
+
+    response = client.delete(
+        "/departments/1",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 403
+
+    error = response.get_json().get("error")
+    assert error == "Admin only"
+
+
+def test_delete_department_not_found(client):
+
+    with app.app_context():
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.delete(
+        "/departments/999",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 404
+
+    error = response.get_json().get("error")
+    assert error == "Department not found"
+
+def test_delete_department_from_another_company(client):
+
+    with app.app_context():
+
+        department = Department(
+            name="IT",
+            company_id=2
+        )
+
+        db.session.add(department)
+        db.session.commit()
+
+        department_id = department.id
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    response = client.delete(
+        f"/departments/{department_id}",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 404
+
+    error = response.get_json().get("error")
+    assert error == "Department not found"
+
+    # Provjera da department druge kompanije nije obrisan
+    with app.app_context():
+        department_still_exists = db.session.get(
+            Department,
+            department_id
+        )
+
+        assert department_still_exists is not None
