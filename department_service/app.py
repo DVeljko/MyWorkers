@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from models import db, Department
+from department_service.models import db, Department
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt
 import os
 from dotenv import load_dotenv
@@ -9,7 +9,8 @@ load_dotenv()
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///departments.db"
+app.config["SQLALCHEMY_DATABASE_URI"] =  os.getenv("DATABASE_URL" , "sqlite:///departments.db")
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 
