@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from models import Attendance, db
+from attendance_service.models import Attendance, db
 from dotenv import load_dotenv
 import os
 import requests
@@ -11,7 +11,7 @@ load_dotenv()
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///attendance.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL" , "sqlite:///attendance.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 

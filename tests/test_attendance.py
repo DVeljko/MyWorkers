@@ -1,0 +1,270 @@
+import os
+
+os.environ["DATABASE_URL"] = "sqlite:///test_attendance.db"
+
+import pytest
+import requests
+from datetime import datetime
+
+from attendance_service.app import app
+from attendance_service.models import db, Attendance
+from flask_jwt_extended import create_access_token
+
+
+@pytest.fixture
+def client():
+
+    app.config["TESTING"] = True
+
+    with app.app_context():
+        db.create_all()
+
+    yield app.test_client()
+
+    with app.app_context():
+        db.session.remove()
+        db.drop_all()
+
+
+def test_app_exists():
+    assert app is not None
+
+def test_check_in_as_admin(client, monkeypatch):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    class FakeResponse:
+        status_code = 200
+
+    def fake_get(*args, **kwargs):
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "attendance_service.app.requests.get",
+        fake_get
+    )
+
+    response = client.post(
+        "/attendance/5",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 201
+
+    data = response.get_json()
+
+    assert data["employee_id"] == 5
+    assert data["company_id"] == 1
+
+    with app.app_context():
+        attendance = db.session.scalar(
+            db.select(Attendance).where(
+                Attendance.employee_id == 5,
+                Attendance.company_id == 1
+            )
+        )
+
+        assert attendance is not None
+        assert attendance.employee_id == 5
+        assert attendance.company_id == 1
+        assert attendance.arrival_time is not None
+        assert attendance.departure_time is None
+
+
+def test_check_in_employee_himself(client, monkeypatch):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="employee@test.com",
+            additional_claims={
+                "role": "employee",
+                "company_id": 1,
+                "employee_id": 5
+            }
+        )
+
+    class FakeResponse:
+        status_code = 200
+
+    def fake_get(*args, **kwargs):
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "attendance_service.app.requests.get",
+        fake_get
+    )
+
+    response = client.post(
+        "/attendance/5",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 201
+
+    data = response.get_json()
+
+    assert data["employee_id"] == 5
+    assert data["company_id"] == 1
+
+    with app.app_context():
+        attendance = db.session.scalar(
+            db.select(Attendance).where(
+                Attendance.employee_id == 5,
+                Attendance.company_id == 1
+            )
+        )
+
+        assert attendance is not None
+        assert attendance.arrival_time is not None
+        assert attendance.departure_time is None
+
+
+def test_check_in_another_employee(client):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="employee@test.com",
+            additional_claims={
+                "role": "employee",
+                "company_id": 1,
+                "employee_id": 5
+            }
+        )
+
+    response = client.post(
+        "/attendance/6",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 403
+
+    error = response.get_json().get("error")
+
+    assert error == "You can only check in yourself"
+
+def test_check_in_employee_already_checked_in(client, monkeypatch):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+        attendance = Attendance(
+            employee_id=5,
+            company_id=1,
+            arrival_time=datetime.now()
+        )
+
+        db.session.add(attendance)
+        db.session.commit()
+
+    class FakeResponse:
+        status_code = 200
+
+    def fake_get(*args, **kwargs):
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "attendance_service.app.requests.get",
+        fake_get
+    )
+
+    response = client.post(
+        "/attendance/5",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 409
+
+    error = response.get_json().get("error")
+
+    assert error == "Employee is already checked in"
+
+
+
+def test_check_in_employee_not_found(client, monkeypatch):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    class FakeResponse:
+        status_code = 404
+
+    def fake_get(*args, **kwargs):
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "attendance_service.app.requests.get",
+        fake_get
+    )
+
+    response = client.post(
+        "/attendance/999",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 400
+
+    error = response.get_json().get("error")
+
+    assert error == "Employee does not exist"
+
+
+def test_check_in_employee_service_unavailable(client, monkeypatch):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    def fake_get(*args, **kwargs):
+        raise requests.exceptions.RequestException
+
+    monkeypatch.setattr(
+        "attendance_service.app.requests.get",
+        fake_get
+    )
+
+    response = client.post(
+        "/attendance/5",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 503
+
+    error = response.get_json().get("error")
+
+    assert error == "Employee service is unavailable"
