@@ -828,3 +828,254 @@ def test_get_single_attendance_from_another_company(client):
     error = response.get_json().get("error")
 
     assert error == "Attendance not found"
+
+
+def test_get_attendance_by_employee_as_admin(client, monkeypatch):
+
+    with app.app_context():
+        attendance1 = Attendance(
+            employee_id=5,
+            company_id=1,
+            arrival_time=datetime.now()
+        )
+
+        attendance2 = Attendance(
+            employee_id=5,
+            company_id=1,
+            arrival_time=datetime.now()
+        )
+
+        db.session.add_all([
+            attendance1,
+            attendance2
+        ])
+        db.session.commit()
+
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    class FakeResponse:
+        status_code = 200
+
+    def fake_get(*args, **kwargs):
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "attendance_service.app.requests.get",
+        fake_get
+    )
+
+    response = client.get(
+        "/employee/5/attendance",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert len(data) == 2
+    assert data[0]["employee_id"] == 5
+    assert data[1]["employee_id"] == 5
+    assert data[0]["company_id"] == 1
+    assert data[1]["company_id"] == 1
+
+
+def test_get_attendance_by_employee_as_manager(client, monkeypatch):
+
+    with app.app_context():
+        attendance = Attendance(
+            employee_id=5,
+            company_id=1,
+            arrival_time=datetime.now()
+        )
+
+        db.session.add(attendance)
+        db.session.commit()
+
+        access_token = create_access_token(
+            identity="manager@test.com",
+            additional_claims={
+                "role": "manager",
+                "company_id": 1
+            }
+        )
+
+    class FakeResponse:
+        status_code = 200
+
+    def fake_get(*args, **kwargs):
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "attendance_service.app.requests.get",
+        fake_get
+    )
+
+    response = client.get(
+        "/employee/5/attendance",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert len(data) == 1
+    assert data[0]["employee_id"] == 5
+    assert data[0]["company_id"] == 1
+
+
+def test_get_employee_own_attendance(client, monkeypatch):
+
+    with app.app_context():
+        attendance = Attendance(
+            employee_id=5,
+            company_id=1,
+            arrival_time=datetime.now()
+        )
+
+        db.session.add(attendance)
+        db.session.commit()
+
+        access_token = create_access_token(
+            identity="employee@test.com",
+            additional_claims={
+                "role": "employee",
+                "company_id": 1,
+                "employee_id": 5
+            }
+        )
+
+    class FakeResponse:
+        status_code = 200
+
+    def fake_get(*args, **kwargs):
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "attendance_service.app.requests.get",
+        fake_get
+    )
+
+    response = client.get(
+        "/employee/5/attendance",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert len(data) == 1
+    assert data[0]["employee_id"] == 5
+    assert data[0]["company_id"] == 1
+
+
+def test_employee_cannot_get_another_employee_attendance(client):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="employee@test.com",
+            additional_claims={
+                "role": "employee",
+                "company_id": 1,
+                "employee_id": 5
+            }
+        )
+
+    response = client.get(
+        "/employee/6/attendance",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 403
+
+    error = response.get_json().get("error")
+
+    assert error == "You can only see your own attendance"
+
+
+def test_get_attendance_employee_not_found(client, monkeypatch):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    class FakeResponse:
+        status_code = 404
+
+    def fake_get(*args, **kwargs):
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "attendance_service.app.requests.get",
+        fake_get
+    )
+
+    response = client.get(
+        "/employee/999/attendance",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 400
+
+    error = response.get_json().get("error")
+
+    assert error == "Employee does not exist"
+
+
+def test_get_attendance_no_data_for_employee(client, monkeypatch):
+
+    with app.app_context():
+        access_token = create_access_token(
+            identity="admin@test.com",
+            additional_claims={
+                "role": "admin",
+                "company_id": 1
+            }
+        )
+
+    class FakeResponse:
+        status_code = 200
+
+    def fake_get(*args, **kwargs):
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "attendance_service.app.requests.get",
+        fake_get
+    )
+
+    response = client.get(
+        "/employee/5/attendance",
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    assert response.status_code == 404
+
+    error = response.get_json().get("error")
+
+    assert error == "There is no data for this employee"
