@@ -28,6 +28,7 @@ jobs:
           pip install -r employee_service/requirements.txt
           pip install -r department_service/requirements.txt
           pip install -r attendance_service/requirements.txt
+          pip install pytest
 
       - name: Run tests
         run: python -m pytest
