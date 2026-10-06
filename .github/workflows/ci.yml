@@ -13,6 +13,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    env:
+      JWT_SECRET_KEY: test-jwt-secret-key-for-ci-testing-only
+      SECRET_KEY: test-flask-secret-key-for-ci-testing-only
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
