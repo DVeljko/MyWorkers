@@ -123,7 +123,9 @@ def login():
             session["access_token"] = access_token
             session["role"] = role
             session["employee_id"] = employee_id
-            # Employee ide direktno na svoj profil
+
+            company_id = data["company_id"]
+            session["company_id"] = company_id
 
             if role == "employee":
                 return redirect(
@@ -672,6 +674,7 @@ def delete_employee(employee_id):
 def dashboard():
 
     token = session.get("access_token")
+    company_id = session.get("company_id")
 
     if not token:
         return redirect(url_for("index"))
@@ -703,6 +706,7 @@ def dashboard():
             active_employees=0,
             inactive_employees=0,
             total_departments=0,
+            company_id=company_id,
             error=error
         )
     
@@ -713,7 +717,9 @@ def dashboard():
         total_employees=data["total_employees"],
         active_employees=data["active_employees"],
         inactive_employees=data["inactive_employees"],
-        total_departments=data["total_departments"]
+        total_departments=data["total_departments"],
+        company_id=company_id,
+
     )
 
 
