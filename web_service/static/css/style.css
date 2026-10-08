@@ -916,3 +916,16 @@ a:hover {
     }
 }
 
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.company-id {
+    background: #f1f5f9;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
