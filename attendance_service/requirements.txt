@@ -4,3 +4,4 @@ python-dotenv
 requests
 Flask-JWT-Extended
 Flask-Migrate
+gunicorn

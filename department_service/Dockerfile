@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY department_service ./department_service
 
-CMD ["python", "-m", "department_service.app"]
+CMD ["sh", "-c", "flask --app department_service.app db upgrade -d department_service/migrations && exec gunicorn --bind 0.0.0.0:${PORT:-5001} --workers 1 department_service.app:app"]

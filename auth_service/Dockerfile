@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY auth_service ./auth_service
 
-CMD ["python", "-m", "auth_service.app"]
+CMD ["sh", "-c", "flask --app auth_service.app db upgrade -d auth_service/migrations && exec gunicorn --bind 0.0.0.0:${PORT:-5004} --workers 1 auth_service.app:app"]
