@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -45,8 +46,18 @@
 
             {% endif %}
 
+            <!-- Hamburger dugme za mobilne uređaje -->
+            <button
+                class="menu-toggle"
+                type="button"
+                aria-label="Toggle navigation"
+                aria-expanded="false"
+                aria-controls="navbar-links"
+            >
+                ☰
+            </button>
 
-            <div class="navbar-links">
+            <div class="navbar-links" id="navbar-links">
 
                 {% if session.get("role") in ["admin", "manager"] %}
 
@@ -108,7 +119,18 @@
     {% block content %}
     {% endblock %}
 
+    <script>
+        const menuToggle = document.querySelector(".menu-toggle");
+        const navbarLinks = document.querySelector(".navbar-links");
+
+        if (menuToggle && navbarLinks) {
+            menuToggle.addEventListener("click", () => {
+                const isOpen = navbarLinks.classList.toggle("active");
+                menuToggle.setAttribute("aria-expanded", String(isOpen));
+            });
+        }
+    </script>
+
 </body>
 
 </html>
-
