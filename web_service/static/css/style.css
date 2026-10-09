@@ -991,3 +991,15 @@ a:hover {
         text-align: center;
     }
 }
+
+
+@media (max-width: 768px) {
+    .navbar-links a {
+        color: #1e293b;
+        font-weight: 600;
+    }
+
+    .navbar-links a:hover {
+        color: #2563eb;
+    }
+}
